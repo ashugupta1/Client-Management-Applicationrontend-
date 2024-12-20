@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const ClientSection = () => {
   const [clients, setClients] = useState([]);
+  const [filteredClients, setFilteredClients] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     clientName: "",
@@ -12,13 +15,14 @@ const ClientSection = () => {
     GSTIN: "",
   });
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
-  // Fetch clients from the backend on component mount
   useEffect(() => {
     const fetchClients = async () => {
       try {
         const response = await axios.get("http://localhost:3000/api/clients");
-        setClients(response.data); // Store the fetched data
+        setClients(response.data);
+        setFilteredClients(response.data);
       } catch (error) {
         console.error("Error fetching clients:", error.message);
         setMessage("Failed to fetch clients.");
@@ -37,7 +41,7 @@ const ClientSection = () => {
     try {
       const response = await axios.post("http://localhost:3000/api/clients", formData);
       alert("Client added successfully!");
-      setShowForm(false); // Close the form
+      setShowForm(false);
       setFormData({
         clientName: "",
         phone: "",
@@ -45,24 +49,64 @@ const ClientSection = () => {
         address: "",
         GSTIN: "",
       });
-      // Re-fetch clients to update the list after adding a new client
       const updatedClients = await axios.get("http://localhost:3000/api/clients");
       setClients(updatedClients.data);
+      setFilteredClients(updatedClients.data);
     } catch (error) {
       console.error("Error adding client:", error.message);
       setMessage("Failed to add client. Please try again.");
     }
   };
 
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (value === "") {
+      setFilteredClients(clients);
+    } else {
+      const filtered = clients.filter((client) =>
+        client.clientName.toLowerCase().includes(value.toLowerCase()) ||
+        client.phone.includes(value) ||
+        client.email.toLowerCase().includes(value.toLowerCase()) ||
+        client.GSTIN.includes(value)
+      );
+      setFilteredClients(filtered);
+    }
+  };
+
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Clients</h2>
-      <button
-        onClick={() => setShowForm(true)}
-        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
-      >
-        Add Client
-      </button>
+      {/* Clients header */}
+      <div className="mb-4">
+        <h1 className="text-3xl font-bold">Clients</h1>
+      </div>
+
+      {/* Top-right buttons */}
+      <div className="flex justify-between items-center mb-4">
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300"
+        >
+          Back to Dashboard
+        </button>
+        <button
+          onClick={() => setShowForm(true)}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
+        >
+          Add Client
+        </button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Search clients by name, phone, email, or GSTIN"
+          value={searchTerm}
+          onChange={handleSearch}
+          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+      </div>
 
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -192,7 +236,7 @@ const ClientSection = () => {
             </tr>
           </thead>
           <tbody>
-            {clients.map((client) => (
+            {filteredClients.map((client) => (
               <tr key={client._id} className="border-b">
                 <td className="px-6 py-4 text-sm text-gray-700">{client.clientName}</td>
                 <td className="px-6 py-4 text-sm text-gray-700">{client.phone}</td>

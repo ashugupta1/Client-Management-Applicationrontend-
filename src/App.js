@@ -1,10 +1,16 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Navigate, Routes } from 'react-router-dom';
-import SignUp from './components/signup';
-import Login from './components/login';
-import Dashboard from './components/dashboard';
-import ProtectedRoute from './components/ProtectedRoute';
-import ClientSection from './components/client';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Route,
+  Navigate,
+  Routes,
+} from "react-router-dom";
+import SignUp from "./components/signup";
+import Login from "./components/login";
+import Dashboard from "./components/dashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
+import ClientSection from "./components/client";
+import Project from "./components/project";
 
 function App() {
   return (
@@ -25,6 +31,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ClientSection />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute>
+              <Project />
             </ProtectedRoute>
           }
         />
