@@ -99,49 +99,69 @@ const AddProject = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const projectData = {
-      ...formData,
-      serialNumber: projects.length + 1,
-      orderNumber: `ORD-${projects.length + 1}`,
-    };
-    console.log(projectData);
+    // Construct data object
+    const dataToSubmit = {
+      projectName: formData.projectName,
+      // orderNumber: "5",
 
-    if (isEditing) {
-      try {
-        await axios.put(
+      projectAddress: formData.projectAddress,
+      TDS: formData.TDS,
+      CGST: formData.CGST,
+      SGST: formData.SGST,
+      IGST: formData.IGST,
+      billedBy: formData.billedBy,
+      billedTo: formData.billedTo,
+      description: formData.description,
+      quantity: formData.quantity,
+      rate: formData.rate,
+      price: formData.price,
+      fileUpload: formData.fileUpload || null, // Include fileUpload field, set to null if no file
+    };
+
+    console.log("Data to Submit:", dataToSubmit);
+
+    try {
+      if (isEditing) {
+        console.log("Updating project...");
+        const res = await axios.put(
           `http://localhost:3000/api/projects/${currentProjectId}`,
-          projectData
-        );
-        setProjects((prev) =>
-          prev.map((project) =>
-            project._id === currentProjectId
-              ? { ...project, ...projectData }
-              : project
-          )
-        );
-        fetchProjects();
-        setIsEditing(false);
-      } catch (err) {
-        console.error("Error updating project:", err);
-      }
-    } else {
-      try {
-        const response = await axios.post(
-          "http://localhost:3000/api/projects",
-          projectData,
+          dataToSubmit,
           {
             headers: {
-              "Content-Type": "multipart/form-data",
+              "Content-Type": "application/json",
             },
           }
         );
-        setProjects((prev) => [...prev, response.data]);
+        console.log("Updated Project:", res.data);
         fetchProjects();
-      } catch (err) {
-        console.error("Error adding project:", err);
+
+        setProjects((prev) =>
+          prev.map((project) =>
+            project._id === currentProjectId
+              ? { ...project, ...dataToSubmit }
+              : project
+          )
+        );
+      } else {
+        console.log("Adding new project...");
+        const response = await axios.post(
+          "http://localhost:3000/api/projects",
+          dataToSubmit,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        fetchProjects();
+        console.log("Project added:", response.data);
+        setProjects((prev) => [...prev, response.data]);
       }
+    } catch (err) {
+      console.error("Error:", err.response?.data || err.message);
     }
 
+    // Reset form data
     setShowForm(false);
     setFormData({
       projectName: "",
@@ -161,14 +181,30 @@ const AddProject = () => {
     });
   };
 
-  const filteredProjects = projects.filter((project) =>
-    project.projectName.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProjects = projects.filter(
+    (project) =>
+      project.projectName &&
+      project.projectName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // const handleEdit = (project) => {
+  //   console.log(project);
+
+  //   setIsEditing(true);
+  //   setCurrentProjectId(project._id);
+  //   console.log(project._id);
+
+  //   setFormData({ ...project });
+  //   setShowForm(true);
+  // };
   const handleEdit = (project) => {
+    console.log(project); // Log the selected project for debugging
+
     setIsEditing(true);
     setCurrentProjectId(project._id);
-    setFormData({ ...project });
+    console.log(project._id);
+
+    setFormData({ ...project }); // This will update the form data with the selected project's details
     setShowForm(true);
   };
 
@@ -354,69 +390,69 @@ const AddProject = () => {
 
       {/* Display Projects in Table */}
       <div className="mt-8 overflow-x-auto">
-      <table className="mt-8 w-full border border-gray-300 bg-white rounded-lg shadow-md">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="p-4 border">Serial</th>
-            <th className="p-4 border">Order Number</th>
-            <th className="p-4 border">Project Name</th>
-            <th className="p-4 border">Address</th>
-            <th className="p-4 border">IGST</th>
-            <th className="p-4 border">CGST</th>
-            <th className="p-4 border">SGST</th>
-            <th className="p-4 border">TDS</th>
-            <th className="p-4 border">Billed By</th>
-            <th className="p-4 border">Billed To</th>
-            <th className="p-4 border">Description</th>
-            <th className="p-4 border">File</th>
-            <th className="p-4 border">Quantity</th>
-            <th className="p-4 border">Rate</th>
-            <th className="p-4 border">Total</th>
-            <th className="p-4 border">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredProjects.map((project, index) => (
-            <tr key={project._id}>
-              <td className="p-4 border">{index + 1}</td>
-              <td className="p-4 border">{project.orderNumber}</td>
-              <td className="p-4 border">{project.projectName}</td>
-              <td className="p-4 border">{project.projectAddress}</td>
-              <td className="p-4 border">{project.IGST}</td>
-              <td className="p-4 border">{project.CGST}</td>
-              <td className="p-4 border">{project.SGST}</td>
-              <td className="p-4 border">{project.TDS}</td>
-              <td className="p-4 border">{project.billedBy}</td>
-              <td className="p-4 border">
-                {project.billedTo
-                  ? `${project.billedTo.clientName} (${project.billedTo.phone})`
-                  : "Not Assigned"}
-              </td>
-              <td className="p-4 border">{project.description}</td>
-              <td className="p-4 border">
-                {project.fileUpload ? "File Uploaded" : "No File"}
-              </td>
-              <td className="p-4 border">{project.quantity}</td>
-              <td className="p-4 border">{project.rate}</td>
-              <td className="p-4 border">{project.price}</td>
-              <td className="p-4 border text-center space-x-4">
-                <button
-                  onClick={() => handleEdit(project)}
-                  className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition duration-300"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(project._id)}
-                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300"
-                >
-                  Delete
-                </button>
-              </td>
+        <table className="mt-8 w-full border border-gray-300 bg-white rounded-lg shadow-md">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="p-4 border">Serial</th>
+              <th className="p-4 border">Order Number</th>
+              <th className="p-4 border">Project Name</th>
+              <th className="p-4 border">Address</th>
+              <th className="p-4 border">IGST</th>
+              <th className="p-4 border">CGST</th>
+              <th className="p-4 border">SGST</th>
+              <th className="p-4 border">TDS</th>
+              <th className="p-4 border">Billed By</th>
+              <th className="p-4 border">Billed To</th>
+              <th className="p-4 border">Description</th>
+              <th className="p-4 border">File</th>
+              <th className="p-4 border">Quantity</th>
+              <th className="p-4 border">Rate</th>
+              <th className="p-4 border">Total</th>
+              <th className="p-4 border">Action</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {filteredProjects.map((project, index) => (
+              <tr key={project._id}>
+                <td className="p-4 border">{index + 1}</td>
+                <td className="p-4 border">{project.orderNumber}</td>
+                <td className="p-4 border">{project.projectName}</td>
+                <td className="p-4 border">{project.projectAddress}</td>
+                <td className="p-4 border">{project.IGST}</td>
+                <td className="p-4 border">{project.CGST}</td>
+                <td className="p-4 border">{project.SGST}</td>
+                <td className="p-4 border">{project.TDS}</td>
+                <td className="p-4 border">{project.billedBy}</td>
+                <td className="p-4 border">
+                  {project.billedTo
+                    ? `${project.billedTo.clientName} (${project.billedTo.phone})`
+                    : "Not Assigned"}
+                </td>
+                <td className="p-4 border">{project.description}</td>
+                <td className="p-4 border">
+                  {project.fileUpload ? "File Uploaded" : "No File"}
+                </td>
+                <td className="p-4 border">{project.quantity}</td>
+                <td className="p-4 border">{project.rate}</td>
+                <td className="p-4 border">{project.price}</td>
+                <td className="p-4 border text-center space-x-4">
+                  <button
+                    onClick={() => handleEdit(project)}
+                    className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition duration-300"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(project._id)}
+                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
