@@ -11,6 +11,7 @@ import Dashboard from "./components/dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ClientSection from "./components/client";
 import Project from "./components/project";
+import Bills from "./components/bills";
 
 function App() {
   return (
@@ -39,6 +40,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Project />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bills"
+          element={
+            <ProtectedRoute>
+              <Bills />
             </ProtectedRoute>
           }
         />

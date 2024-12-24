@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Sidebar from "./sidebar";
 
 const AddProject = () => {
   const [showForm, setShowForm] = useState(false);
@@ -21,6 +22,7 @@ const AddProject = () => {
     quantity: 0,
     rate: 0,
     price: 0,
+    total: 0,
   });
   const [isEditing, setIsEditing] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState(null);
@@ -38,6 +40,10 @@ const AddProject = () => {
     };
     fetchClients();
   }, []);
+
+  const calculateTotal = () => {
+
+  }
 
   useEffect(() => {
     setFormData((prev) => ({
@@ -118,8 +124,6 @@ const AddProject = () => {
       fileUpload: formData.fileUpload || null, // Include fileUpload field, set to null if no file
     };
 
-    console.log("Data to Submit:", dataToSubmit);
-
     try {
       if (isEditing) {
         console.log("Updating project...");
@@ -178,6 +182,7 @@ const AddProject = () => {
       quantity: 0,
       rate: 0,
       price: 0,
+      total: 0,
     });
   };
 
@@ -198,8 +203,6 @@ const AddProject = () => {
   //   setShowForm(true);
   // };
   const handleEdit = (project) => {
-    console.log(project); // Log the selected project for debugging
-
     setIsEditing(true);
     setCurrentProjectId(project._id);
     console.log(project._id);
@@ -218,7 +221,9 @@ const AddProject = () => {
   };
 
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
+    <div className="flex">
+      <Sidebar />
+    <div className="p-6 flex-1 p-4 bg-gray-100 min-h-screen">
       {/* Title and Back Button */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-4xl font-semibold">Projects</h1>
@@ -454,6 +459,7 @@ const AddProject = () => {
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   );
 };
