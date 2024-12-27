@@ -115,7 +115,7 @@ const AddProject = () => {
       quantity: formData.quantity,
       rate: formData.rate,
       price: formData.price,
-      fileUpload: formData.fileUpload || null, // Include fileUpload field, set to null if no file
+      fileUpload: formData.fileUpload || null,
     };
 
     console.log("Data to Submit:", dataToSubmit);
@@ -248,8 +248,8 @@ const AddProject = () => {
 
       {showForm && (
         <form
-          onSubmit={handleSubmit}
-          className="mt-6 bg-white shadow-lg rounded-lg p-8 space-y-6"
+          onSubmit={handleSubmit} enctype="multipart/form-data"
+          className="mt-6 bg-white shadow-lg rounded-lg p-8 space-y-6" 
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <input
