@@ -40,7 +40,10 @@ const ClientSection = () => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post("http://localhost:3000/api/clients", formData);
+      const response = await axios.post(
+        "http://localhost:3000/api/clients",
+        formData
+      );
       alert("Client added successfully!");
       setShowForm(false);
       setFormData({
@@ -50,7 +53,9 @@ const ClientSection = () => {
         address: "",
         GSTIN: "",
       });
-      const updatedClients = await axios.get("http://localhost:3000/api/clients");
+      const updatedClients = await axios.get(
+        "http://localhost:3000/api/clients"
+      );
       setClients(updatedClients.data);
       setFilteredClients(updatedClients.data);
     } catch (error) {
@@ -65,11 +70,12 @@ const ClientSection = () => {
     if (value === "") {
       setFilteredClients(clients);
     } else {
-      const filtered = clients.filter((client) =>
-        client.clientName.toLowerCase().includes(value.toLowerCase()) ||
-        client.phone.includes(value) ||
-        client.email.toLowerCase().includes(value.toLowerCase()) ||
-        client.GSTIN.includes(value)
+      const filtered = clients.filter(
+        (client) =>
+          client.clientName.toLowerCase().includes(value.toLowerCase()) ||
+          client.phone.includes(value) ||
+          client.email.toLowerCase().includes(value.toLowerCase()) ||
+          client.GSTIN.includes(value)
       );
       setFilteredClients(filtered);
     }
@@ -131,6 +137,7 @@ const ClientSection = () => {
                   <input
                     id="clientName"
                     name="clientName"
+                    placeholder="Ashu Gupta"
                     type="text"
                     value={formData.clientName}
                     onChange={handleInputChange}
@@ -138,7 +145,81 @@ const ClientSection = () => {
                     className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
                   />
                 </div>
-                {/* Other form fields */}
+                <div>
+                  <label
+                    htmlFor="phone"
+                    className="block text-sm font-medium text-gray-600"
+                  >
+                    Phone Number
+                  </label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="text"
+                    placeholder="1234567890"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-600"
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="example@domain.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="address"
+                    className="block text-sm font-medium text-gray-600"
+                  >
+                    Address
+                  </label>
+                  <textarea
+                    id="address"
+                    name="address"
+                    placeholder="Enter the address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    rows="3"
+                  ></textarea>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="GSTIN"
+                    className="block text-sm font-medium text-gray-600"
+                  >
+                    GSTIN
+                  </label>
+                  <input
+                    id="GSTIN"
+                    name="GSTIN"
+                    type="text"
+                    placeholder="22AAAAA0000A1Z5"
+                    value={formData.GSTIN}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+
                 <div className="flex justify-end space-x-4">
                   <button
                     type="button"
@@ -165,21 +246,41 @@ const ClientSection = () => {
           <table className="min-w-full bg-white border border-gray-300 shadow-sm">
             <thead>
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Client Name</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Phone</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Email</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">Address</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">GSTIN</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
+                  Client Name
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
+                  Phone
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
+                  Address
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-600">
+                  GSTIN
+                </th>
               </tr>
             </thead>
             <tbody>
               {filteredClients.map((client) => (
                 <tr key={client._id} className="border-b">
-                  <td className="px-6 py-4 text-sm text-gray-700">{client.clientName}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{client.phone}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{client.email}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{client.address}</td>
-                  <td className="px-6 py-4 text-sm text-gray-700">{client.GSTIN}</td>
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    {client.clientName}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    {client.phone}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    {client.email}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    {client.address}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    {client.GSTIN}
+                  </td>
                 </tr>
               ))}
             </tbody>
