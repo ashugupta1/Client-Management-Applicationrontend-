@@ -19,8 +19,23 @@ const BillSection = () => {
     billedQuantity: "",
   });
 
-  // Fetch bills
+  // Generate unique Bill Number
+  const generateUniqueBillNo = () => {
+    const randomValue = Math.random().toString(36).substr(2, 5).toUpperCase();
+    return `BILLNO-${randomValue}`;
+  };
+
+  // Generate Bill Number on modal open
+  const handleGenerateBillNo = () => {
+    const uniqueBillNo = generateUniqueBillNo();
+    setFormData((prevData) => ({
+      ...prevData,
+      billNumber: uniqueBillNo,
+    }));
+  };
+
   useEffect(() => {
+    // Fetch bills
     const fetchBills = async () => {
       try {
         const res = await axios.get("http://localhost:3000/api/bills");
@@ -31,20 +46,16 @@ const BillSection = () => {
       }
     };
     fetchBills();
-  }, []);
 
-  // Fetch projects
-  useEffect(() => {
+    // Fetch projects
     const fetchProjects = async () => {
       try {
         const response = await axios.get("http://localhost:3000/api/projects");
-        setProjects(response.data); // Set the state with fetched data
-        console.log("Fetched Projects:", response.data); // Log the fetched data
+        setProjects(response.data || []);
       } catch (err) {
         console.error("Error fetching projects:", err);
       }
     };
-
     fetchProjects();
   }, []);
 
@@ -68,24 +79,46 @@ const BillSection = () => {
     );
 
     if (selected) {
-      console.log("Selected Project Data:", selected); // Log the whole selected object
       setFormData((prevData) => ({
         ...prevData,
-        projectName: selected.projectName, // Ensure this matches the field name in your data
+        projectName: selected.projectName || "",
         description: selected.description || "",
         quantity: selected.quantity || "",
         rate: selected.rate || "",
-        total: selected.quantity * selected.rate || "", // Assuming total is quantity * rate
+        total: (selected.quantity || 0) * (selected.rate || 0),
+        billedTo: selected.billedTo?.clientName || "",
       }));
     }
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add bill logic here
-    console.log(formData);
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/bills",
+        formData
+      );
+      alert("Bill created successfully!");
+      setBills((prevBills) => [...prevBills, response.data.bill]);
+    } catch (error) {
+      console.error(
+        "Error submitting form:",
+        error.response?.data || error.message
+      );
+      alert("Failed to create the bill. Please try again.");
+    }
     setShowModal(false); // Close modal after submission
+    setFormData({
+      date: "",
+      billNumber: "",
+      billedTo: "",
+      description: "",
+      quantity: "",
+      rate: "",
+      total: "",
+      billedQuantity: "",
+    });
   };
 
   return (
@@ -95,19 +128,71 @@ const BillSection = () => {
         <h2 className="text-xl font-bold mb-4">Bill Section</h2>
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded"
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setShowModal(true);
+            handleGenerateBillNo(); // Generate Bill Number when opening the modal
+          }}
         >
           Add Bill
         </button>
 
-        {/* Modal */}
+        {/* Table */}
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-4">Bill List</h3>
+          <table className="min-w-full bg-white border border-gray-300">
+            <thead>
+              <tr>
+                <th className="border px-4 py-2 text-left">S. No.</th>
+                <th className="border px-4 py-2 text-left">Date</th>
+                <th className="border px-4 py-2 text-left">Project Name</th>
+                <th className="border px-4 py-2 text-left">Bill Number</th>
+                <th className="border px-4 py-2 text-left">Billed Quantity</th>
+                <th className="border px-4 py-2 text-left">Billed Rate</th>
+                <th className="border px-4 py-2 text-left">
+                  Balance Before Tax
+                </th>
+                <th className="border px-4 py-2 text-left">TDS</th>
+                <th className="border px-4 py-2 text-left">Total Tax</th>
+                <th className="border px-4 py-2 text-left">
+                  Balance After Tax
+                </th>
+                <th className="border px-4 py-2 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.isArray(bills) &&
+                bills.map((bill, index) => (
+                  <tr key={bill._id}>
+                    <td className="border px-4 py-2">{index + 1}</td>
+                    <td className="border px-4 py-2">{bill.date}</td>
+                    <td className="border px-4 py-2">{bill.projectName}</td>
+                    <td className="border px-4 py-2">{bill.billNumber}</td>
+                    <td className="border px-4 py-2">{bill.billedQuantity}</td>
+                    <td className="border px-4 py-2">{bill.billedRate}</td>
+                    <td className="border px-4 py-2">
+                      {bill.balanceBeforeTax}
+                    </td>
+                    <td className="border px-4 py-2">{bill.tds}</td>
+                    <td className="border px-4 py-2">{bill.totalTax}</td>
+                    <td className="border px-4 py-2">{bill.balanceAfterTax}</td>
+                    <td className="border px-4 py-2">
+                      <button className="text-blue-500">Edit</button>
+                      <button className="text-red-500 ml-2">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Modal for Adding Bill */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
             <div className="bg-white p-6 rounded shadow-lg w-1/3">
               <h2 className="text-xl font-bold mb-4">Add Bill</h2>
               <form onSubmit={handleSubmit}>
                 {/* Date */}
-                <div className="mb-4">
+                <div className="mb-4 mt-4">
                   <label htmlFor="date" className="block text-sm font-medium">
                     Date
                   </label>
@@ -121,9 +206,25 @@ const BillSection = () => {
                     required
                   />
                 </div>
+                {/* Project Selection */}
+                <select
+                  id="projectName"
+                  name="projectName"
+                  value={selectedProject}
+                  onChange={handleProjectSelect}
+                  className="w-full border border-gray-300 p-2 rounded mt-4"
+                  required
+                >
+                  <option value="">Select a project</option>
+                  {projects.map((project) => (
+                    <option key={project._id} value={project._id}>
+                      {project.projectName}
+                    </option>
+                  ))}
+                </select>
 
                 {/* Bill Number */}
-                <div className="mb-4">
+                <div className="mb-4 mt-4">
                   <label
                     htmlFor="billNumber"
                     className="block text-sm font-medium"
@@ -135,7 +236,7 @@ const BillSection = () => {
                     id="billNumber"
                     name="billNumber"
                     value={formData.billNumber}
-                    onChange={handleChange}
+                    readOnly
                     className="w-full border border-gray-300 p-2 rounded"
                     required
                   />
@@ -154,31 +255,12 @@ const BillSection = () => {
                     id="billedTo"
                     name="billedTo"
                     value={formData.billedTo}
-                    onChange={handleChange}
+                    readOnly
                     className="w-full border border-gray-300 p-2 rounded"
                     required
                   />
                 </div>
 
-                {/* Project Name */}
-                <select
-                  id="projectName"
-                  name="projectName"
-                  value={selectedProject}
-                  onChange={handleProjectSelect}
-                  className="w-full border border-gray-300 p-2 rounded"
-                  required
-                >
-                  <option value="">Select a project</option>
-                  {projects.map((project) => (
-                    <option key={project._id} value={project._id}>
-                      {project.projectName}{" "}
-                      {/* Ensure this field matches the field name in your project */}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Other fields */}
                 {/* Description */}
                 <div className="mb-4">
                   <label
@@ -192,6 +274,7 @@ const BillSection = () => {
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
+                    readOnly
                     className="w-full border border-gray-300 p-2 rounded"
                     required
                   />
@@ -211,6 +294,7 @@ const BillSection = () => {
                     name="quantity"
                     value={formData.quantity}
                     onChange={handleChange}
+                    readOnly
                     className="w-full border border-gray-300 p-2 rounded"
                     required
                   />
@@ -227,6 +311,7 @@ const BillSection = () => {
                     name="rate"
                     value={formData.rate}
                     onChange={handleChange}
+                    readOnly
                     className="w-full border border-gray-300 p-2 rounded"
                     required
                   />
@@ -243,6 +328,7 @@ const BillSection = () => {
                     name="total"
                     value={formData.total}
                     onChange={handleChange}
+                    readOnly
                     className="w-full border border-gray-300 p-2 rounded"
                     required
                   />
@@ -267,7 +353,6 @@ const BillSection = () => {
                   />
                 </div>
 
-                {/* Buttons */}
                 <div className="flex justify-end gap-4">
                   <button
                     type="button"
@@ -287,46 +372,6 @@ const BillSection = () => {
             </div>
           </div>
         )}
-
-        {/* Table */}
-        <table className="min-w-full bg-white border border-gray-300">
-          <thead>
-            <tr>
-              <th>S. No.</th>
-              <th>Date</th>
-              <th>Project Name</th>
-              <th>Bill Number</th>
-              <th>Billed Quantity</th>
-              <th>Billed Rate</th>
-              <th>Balance Before Tax</th>
-              <th>TDS</th>
-              <th>Total Tax</th>
-              <th>Balance After Tax</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.isArray(bills) &&
-              bills.map((bill, index) => (
-                <tr key={bill._id}>
-                  <td>{index + 1}</td>
-                  <td>{bill.date}</td>
-                  <td>{bill.projectName}</td>
-                  <td>{bill.billNumber}</td>
-                  <td>{bill.billedQuantity}</td>
-                  <td>{bill.billedRate}</td>
-                  <td>{bill.balanceBeforeTax}</td>
-                  <td>{bill.tds}</td>
-                  <td>{bill.totalTax}</td>
-                  <td>{bill.balanceAfterTax}</td>
-                  <td>
-                    <button className="text-blue-500">Edit</button>
-                    <button className="text-red-500 ml-2">Delete</button>
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
       </div>
     </div>
   );
