@@ -28,7 +28,7 @@ const AddProject = () => {
     description: "",
     quantity: 0,
     rate: 0,
-    price: 0,
+    // price: 0,
     total: 0,
   });
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ const AddProject = () => {
   useEffect(() => {
     setFormData((prev) => ({
       ...prev,
-      price: prev.quantity * prev.rate,
+      total: prev.quantity * prev.rate,
     }));
   }, [formData.quantity, formData.rate]);
 
@@ -117,7 +117,7 @@ const AddProject = () => {
       description: formData.description,
       quantity: formData.quantity,
       rate: formData.rate,
-      price: formData.price,
+      // price: formData.price,
       fileUpload: formData.fileUpload || null,
     };
 
@@ -153,7 +153,7 @@ const AddProject = () => {
       description: "",
       quantity: 0,
       rate: 0,
-      price: 0,
+      // price: 0,
       total: 0,
     });
   };
@@ -418,14 +418,14 @@ const AddProject = () => {
                     onChange={handleFileChange}
                     className="p-3 border border-gray-300 rounded-lg w-full"
                   />
-                  <input
+                  {/* <input
                     type="number"
                     name="price"
                     placeholder="Total Price"
                     value={formData.price}
                     className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
                     disabled
-                  />
+                  /> */}
                 </div>
 
                 <button
@@ -445,6 +445,7 @@ const AddProject = () => {
           </div>
         )}
 
+        {/* Table */}
         <table className="w-full border-collapse border border-gray-300">
           <thead>
             <tr>
@@ -469,7 +470,7 @@ const AddProject = () => {
             </tr>
           </thead>
           <tbody>
-            {projects.map((project, index) => (
+            {filteredProjects.map((project, index) => (
               <tr key={project._id}>
                 <td className="border p-2">
                   <input
@@ -500,7 +501,9 @@ const AddProject = () => {
                 <td className="border p-2">{project.quantity}</td>
                 <td className="border p-2">{project.quantity}</td>
                 <td className="border p-2">{project.rate}</td>
-                <td className="border p-2">{project.price}</td>
+                <td className="border p-2">
+                  {project.rate * project.quantity}
+                </td>
                 <td className="border p-2 text-center space-x-4">
                   <button
                     onClick={() => handleEdit(project)}

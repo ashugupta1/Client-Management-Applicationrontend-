@@ -15,83 +15,107 @@ const BillSection = () => {
     description: "",
     quantity: "",
     rate: "",
-    total: "",
+    // total: "",
     billedQuantity: "",
+    cgst: "",
+    sgst: "",
+    igst: "",
+    tds: "",
   });
 
-  // Generate unique Bill Number
-  const generateUniqueBillNo = () => {
-    const randomValue = Math.random().toString(36).substr(2, 5).toUpperCase();
-    return `BILLNO-${randomValue}`;
-  };
+  const generateUniqueBillNo = () =>
+    `BILLNO-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
 
-  // Generate Bill Number on modal open
   const handleGenerateBillNo = () => {
-    const uniqueBillNo = generateUniqueBillNo();
     setFormData((prevData) => ({
       ...prevData,
-      billNumber: uniqueBillNo,
+      billNumber: generateUniqueBillNo(),
     }));
   };
-
   useEffect(() => {
-    // Fetch bills
-    const fetchBills = async () => {
+    const fetchData = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/api/bills");
-        setBills(res.data.bills || res.data || []);
+        const billsRes = await axios.get("http://localhost:3000/api/bills");
+        // console.log("Fetched Bills:", billsRes.data);
+        setBills(billsRes.data || []); // Ensure the response structure matches
       } catch (err) {
         console.error("Error fetching bills:", err);
-        setBills([]);
       }
     };
-    fetchBills();
+    fetchData();
+  }, []);
 
-    // Fetch projects
+  useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/projects");
-        setProjects(response.data || []);
+        const projectsRes = await axios.get(
+          "http://localhost:3000/api/projects"
+        );
+        console.log("Fetched Projects:", projectsRes.data);
+        setProjects(projectsRes.data || []); // Ensure the correct structure
       } catch (err) {
         console.error("Error fetching projects:", err);
       }
     };
+
     fetchProjects();
   }, []);
 
-  // Handle change in form fields
+  //   const fetchData = async () => {
+  //     try {
+  //       const [billsRes, projectsRes] = await Promise.all([
+  //         axios.get("http://localhost:3000/api/bills"),
+  //         axios.get("http://localhost:3000/api/projects"),
+  //       ]);
+  //       setBills(billsRes.data.bills || []);
+  //       setProjects(projectsRes.data || []);
+  //     } catch (err) {
+  //       console.error("Error fetching data:", err);
+  //     }
+  //   };
+  //   fetchData();
+  // }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  // Handle project selection
   const handleProjectSelect = (e) => {
     const selectedProjectId = e.target.value;
     setSelectedProject(selectedProjectId);
 
-    // Find the selected project from the list and pre-fill the form
-    const selected = projects.find(
-      (project) => project._id === selectedProjectId
-    );
+    const project = projects.find((p) => p._id === selectedProjectId);
+    if (project) {
+      console.log(project);
 
-    if (selected) {
-      setFormData((prevData) => ({
-        ...prevData,
-        projectName: selected.projectName || "",
-        description: selected.description || "",
-        quantity: selected.quantity || "",
-        rate: selected.rate || "",
-        total: (selected.quantity || 0) * (selected.rate || 0),
-        billedTo: selected.billedTo?.clientName || "",
-      }));
+      // const tdsRate = project / 100;
+
+      // const balanceBeforeTax = project.quantity * project.rate;
+      // const tdsInRupees = (balanceBeforeTax * tdsRate) / 100;
+      // const totalTax =
+      //   (totalAmount * cgst) / 100 +
+      //   (totalAmount * sgst) / 100 +
+      //   (totalAmount * igst) / 100;
+      // const balanceAfterTax = balanceBeforeTax + totalTax;
+
+      setFormData({
+        ...formData,
+        projectName: project.projectName,
+        description: project.description || "",
+        quantity: project.quantity,
+        rate: project.rate,
+        // total: balanceBeforeTax,
+        billedTo: project.billedTo?.clientName || "",
+        billedQuantity: "",
+        cgst: project.CGST,
+        sgst: project.SGST,
+        igst: project.IGST,
+        tds: project.TDS,
+      });
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -99,26 +123,39 @@ const BillSection = () => {
         "http://localhost:3000/api/bills",
         formData
       );
-      alert("Bill created successfully!");
-      setBills((prevBills) => [...prevBills, response.data.bill]);
-    } catch (error) {
-      console.error(
-        "Error submitting form:",
-        error.response?.data || error.message
+
+      const updatedProject = {
+        ...projects.find((p) => p._id === selectedProject),
+        quantity:
+          projects.find((p) => p._id === selectedProject).quantity -
+          formData.billedQuantity,
+      };
+
+      await axios.put(`http://localhost:3000/api/projects/${selectedProject}`, {
+        quantity: updatedProject.quantity,
+      });
+
+      setProjects((prev) =>
+        prev.map((p) => (p._id === selectedProject ? updatedProject : p))
       );
-      alert("Failed to create the bill. Please try again.");
+      setBills((prev) => [...prev, response.data.bill]);
+
+      alert("Bill created successfully!");
+      setShowModal(false);
+      setFormData({
+        date: "",
+        billNumber: "",
+        billedTo: "",
+        description: "",
+        quantity: "",
+        rate: "",
+        // total: "",
+        billedQuantity: "",
+      });
+    } catch (error) {
+      console.error("Error submitting bill:", error);
+      alert("Failed to create the bill.");
     }
-    setShowModal(false); // Close modal after submission
-    setFormData({
-      date: "",
-      billNumber: "",
-      billedTo: "",
-      description: "",
-      quantity: "",
-      rate: "",
-      total: "",
-      billedQuantity: "",
-    });
   };
 
   return (
@@ -130,62 +167,49 @@ const BillSection = () => {
           className="bg-blue-500 text-white px-4 py-2 rounded"
           onClick={() => {
             setShowModal(true);
-            handleGenerateBillNo(); // Generate Bill Number when opening the modal
+            handleGenerateBillNo();
           }}
         >
           Add Bill
         </button>
-
-        {/* Table */}
         <div className="mt-6">
           <h3 className="text-lg font-semibold mb-4">Bill List</h3>
           <table className="min-w-full bg-white border border-gray-300">
             <thead>
               <tr>
-                <th className="border px-4 py-2 text-left">S. No.</th>
-                <th className="border px-4 py-2 text-left">Date</th>
-                <th className="border px-4 py-2 text-left">Project Name</th>
-                <th className="border px-4 py-2 text-left">Bill Number</th>
-                <th className="border px-4 py-2 text-left">Billed Quantity</th>
-                <th className="border px-4 py-2 text-left">Billed Rate</th>
-                <th className="border px-4 py-2 text-left">
-                  Balance Before Tax
-                </th>
-                <th className="border px-4 py-2 text-left">TDS</th>
-                <th className="border px-4 py-2 text-left">Total Tax</th>
-                <th className="border px-4 py-2 text-left">
-                  Balance After Tax
-                </th>
-                <th className="border px-4 py-2 text-left">Actions</th>
+                <th className="border px-4 py-2">S. No.</th>
+                <th className="border px-4 py-2">Date</th>
+                <th className="border px-4 py-2">Project Name</th>
+                <th className="border px-4 py-2">Bill Number</th>
+                <th className="border px-4 py-2">Billed Quantity</th>
+                <th className="border px-4 py-2">Balance Before Tax</th>
+                <th className="border px-4 py-2">TDS</th>
+                <th className="border px-4 py-2">Total Tax</th>
+                <th className="border px-4 py-2">Balance After Tax</th>
+                <th className="border px-4 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(bills) &&
-                bills.map((bill, index) => (
-                  <tr key={bill._id}>
-                    <td className="border px-4 py-2">{index + 1}</td>
-                    <td className="border px-4 py-2">{bill.date}</td>
-                    <td className="border px-4 py-2">{bill.projectName}</td>
-                    <td className="border px-4 py-2">{bill.billNumber}</td>
-                    <td className="border px-4 py-2">{bill.billedQuantity}</td>
-                    <td className="border px-4 py-2">{bill.billedRate}</td>
-                    <td className="border px-4 py-2">
-                      {bill.balanceBeforeTax}
-                    </td>
-                    <td className="border px-4 py-2">{bill.tds}</td>
-                    <td className="border px-4 py-2">{bill.totalTax}</td>
-                    <td className="border px-4 py-2">{bill.balanceAfterTax}</td>
-                    <td className="border px-4 py-2">
-                      <button className="text-blue-500">Edit</button>
-                      <button className="text-red-500 ml-2">Delete</button>
-                    </td>
-                  </tr>
-                ))}
+              {bills.map((bill, index) => (
+                <tr key={bill._id}>
+                  <td className="border px-4 py-2">{index + 1}</td>
+                  <td className="border px-4 py-2">{bill.date}</td>
+                  <td className="border px-4 py-2">{bill.projectName}</td>
+                  <td className="border px-4 py-2">{bill.billNumber}</td>
+                  <td className="border px-4 py-2">{bill.billedQuantity}</td>
+                  <td className="border px-4 py-2">{bill.balanceBeforeTax}</td>
+                  <td className="border px-4 py-2">{bill.tds}</td>
+                  <td className="border px-4 py-2">{bill.totalTax}</td>
+                  <td className="border px-4 py-2">{bill.balanceAfterTax}</td>
+                  <td className="border px-4 py-2">
+                    <button className="text-blue-500">Edit</button>
+                    <button className="text-red-500 ml-2">Delete</button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-
-        {/* Modal for Adding Bill */}
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
             <div className="bg-white p-6 rounded shadow-lg w-1/3">
@@ -318,7 +342,7 @@ const BillSection = () => {
                 </div>
 
                 {/* Total */}
-                <div className="mb-4">
+                {/* <div className="mb-4">
                   <label htmlFor="total" className="block text-sm font-medium">
                     Total
                   </label>
@@ -332,7 +356,7 @@ const BillSection = () => {
                     className="w-full border border-gray-300 p-2 rounded"
                     required
                   />
-                </div>
+                </div> */}
 
                 {/* Billed Quantity */}
                 <div className="mb-4">
