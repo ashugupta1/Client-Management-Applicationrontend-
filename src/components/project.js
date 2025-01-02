@@ -117,23 +117,54 @@ const AddProject = () => {
       description: formData.description,
       quantity: formData.quantity,
       rate: formData.rate,
+<<<<<<< HEAD
       // price: formData.price,
       fileUpload: formData.fileUpload || null,
+=======
+      price: formData.price,
+      fileUpload: formData.fileUpload || null, // Include fileUpload field, set to null if no file
+>>>>>>> 369b485f29d2c2e95baf317b897bd956a5b1d737
     };
 
+    console.log("Data to Submit:", dataToSubmit);
+
     try {
-      const response = await axios.post(
-        "http://localhost:3000/api/projects",
-        dataToSubmit,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      fetchProjects();
-      console.log("Project added:", response.data);
-      setProjects((prev) => [...prev, response.data]);
+      if (isEditing) {
+        console.log("Updating project...");
+        const res = await axios.put(
+          `http://localhost:3000/api/projects/${currentProjectId}`,
+          dataToSubmit,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log("Updated Project:", res.data);
+        fetchProjects();
+
+        setProjects((prev) =>
+          prev.map((project) =>
+            project._id === currentProjectId
+              ? { ...project, ...dataToSubmit }
+              : project
+          )
+        );
+      } else {
+        console.log("Adding new project...");
+        const response = await axios.post(
+          "http://localhost:3000/api/projects",
+          dataToSubmit,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        fetchProjects();
+        console.log("Project added:", response.data);
+        setProjects((prev) => [...prev, response.data]);
+      }
     } catch (err) {
       console.error("Error:", err.response?.data || err.message);
     }
@@ -283,6 +314,7 @@ const AddProject = () => {
           </button>
         </div>
 
+<<<<<<< HEAD
         {showForm && (
           <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
             <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
@@ -427,6 +459,140 @@ const AddProject = () => {
                     disabled
                   /> */}
                 </div>
+=======
+      {showForm && (
+        <form
+          onSubmit={handleSubmit}
+          className="mt-6 bg-white shadow-lg rounded-lg p-8 space-y-6"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <input
+              type="text"
+              name="projectName"
+              placeholder="Project Name"
+              value={formData.projectName}
+              onChange={handleInputChange}
+              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <input
+              type="text"
+              name="projectAddress"
+              placeholder="Project Address"
+              value={formData.projectAddress}
+              onChange={handleInputChange}
+              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <select
+              name="TDS"
+              value={formData.TDS}
+              onChange={handleDropdownChange}
+              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value={0}>Select TDS</option>
+              <option value={1}>1%</option>
+              <option value={2}>2%</option>
+              <option value={5}>5%</option>
+            </select>
+            <select
+              name="CGST"
+              value={formData.CGST}
+              onChange={handleDropdownChange}
+              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={0}>Select CGST</option>
+              <option value={5}>5%</option>
+              <option value={12}>12%</option>
+              <option value={18}>18%</option>
+            </select>
+            <select
+              name="SGST"
+              value={formData.SGST}
+              onChange={handleDropdownChange}
+              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={0}>Select SGST</option>
+              <option value={5}>5%</option>
+              <option value={12}>12%</option>
+              <option value={18}>18%</option>
+            </select>
+            <select
+              name="IGST"
+              value={formData.IGST}
+              onChange={handleDropdownChange}
+              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={0}>Select IGST</option>
+              <option value={5}>5%</option>
+              <option value={12}>12%</option>
+              <option value={18}>18%</option>
+            </select>
+            <select
+              name="billedTo"
+              value={formData.billedTo}
+              onChange={handleInputChange}
+              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+              required
+            >
+              <option value="">Select Client</option>
+              {clients.map((client) => (
+                <option key={client._id} value={client._id}>
+                  {client.clientName} - {client.GSTIN}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              name="billedBy"
+              placeholder="Billed By"
+              value={formData.billedBy}
+              onChange={handleInputChange}
+              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <textarea
+              name="description"
+              placeholder="Description"
+              value={formData.description}
+              onChange={handleInputChange}
+              className="p-3 border border-gray-300 rounded-lg w-full h-24 focus:ring-2 focus:ring-blue-500"
+              required
+            ></textarea>
+            <input
+              type="number"
+              name="quantity"
+              placeholder="Quantity"
+              value={formData.quantity}
+              onChange={handleInputChange}
+              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <input
+              type="number"
+              name="rate"
+              placeholder="Rate"
+              value={formData.rate}
+              onChange={handleInputChange}
+              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            <input
+              type="file"
+              onChange={handleFileChange}
+              className="p-3 border border-gray-300 rounded-lg w-full"
+            />
+            <input
+              type="number"
+              name="price"
+              placeholder="Total Price"
+              value={formData.price}
+              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+              disabled
+            />
+          </div>
+>>>>>>> 369b485f29d2c2e95baf317b897bd956a5b1d737
 
                 <button
                   type="submit"
