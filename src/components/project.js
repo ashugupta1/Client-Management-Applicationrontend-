@@ -14,6 +14,28 @@ const AddProject = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isBillButtonEnabled, setBillButtonEnabled] = useState(false);
 
+  //bill data
+  const [bills, setBills] = useState([]);
+  // const [projects, setProjects] = useState([]);
+  // const [showBillModal, setShowBillModal] = useState(false);
+  // const [selectedProject, setSelectedProject] = useState("");
+  const [editBillMode, setEditBillMode] = useState(false); // Track if we are editing
+  const [selectedBill, setSelectedBill] = useState(null); // Store the bill to be edited
+  const [formBillData, setFormBillData] = useState({
+    date: "",
+    billNumber: "",
+    billedTo: "",
+    projectName: "",
+    description: "",
+    quantity: "",
+    rate: "",
+    billedQuantity: "",
+    cgst: "",
+    sgst: "",
+    igst: "",
+    tds: "",
+  });
+
   const [formData, setFormData] = useState({
     projectName: "",
     orderNumber: "",
@@ -117,13 +139,8 @@ const AddProject = () => {
       description: formData.description,
       quantity: formData.quantity,
       rate: formData.rate,
-<<<<<<< HEAD
       // price: formData.price,
       fileUpload: formData.fileUpload || null,
-=======
-      price: formData.price,
-      fileUpload: formData.fileUpload || null, // Include fileUpload field, set to null if no file
->>>>>>> 369b485f29d2c2e95baf317b897bd956a5b1d737
     };
 
     console.log("Data to Submit:", dataToSubmit);
@@ -223,52 +240,188 @@ const AddProject = () => {
     }
   };
 
+  // const handleProjectCheckbox = (project) => {
+  //   if (selectedProject && selectedProject._id === project._id) {
+  //     // Deselect if already selected
+  //     setSelectedProject(null);
+  //     setBillButtonEnabled(false);
+  //   } else {
+  //     // Select the project
+  //     console.log(project);
+
+  //     setSelectedProject(project);
+  //     setBillButtonEnabled(true);
+  //   }
+  // };
+
   const handleProjectCheckbox = (project) => {
     if (selectedProject && selectedProject._id === project._id) {
       // Deselect if already selected
       setSelectedProject(null);
       setBillButtonEnabled(false);
+      setFormBillData({
+        date: "",
+        projectName: "",
+        billNumber: "",
+        billedTo: "",
+        description: "",
+        quantity: "",
+        rate: "",
+        billedQuantity: "",
+        tds: "",
+        cgst: "",
+        sgst: "",
+        igst: "",
+      });
     } else {
-      // Select the project
-      console.log(project);
-
+      // Select the project and spread its data into form fields
       setSelectedProject(project);
       setBillButtonEnabled(true);
+      setFormBillData({
+        date: project.date || "", // If the project has a date property
+        projectName: project.projectName || "",
+        billNumber: project.billNumber || "", // You might need to generate this dynamically
+        billedTo: project.billedTo || "",
+        description: project.description || "",
+        quantity: project.quantity || "",
+        rate: project.rate || "",
+        billedQuantity: project.billedQuantity || "",
+        tds: project.TDS || "",
+        cgst: project.CGST || "",
+        sgst: project.SGST || "",
+        igst: project.IGST || "",
+      });
     }
   };
+
+  // const handleBillSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   // Collect form data
+  //   const formData = new FormData(e.target);
+  //   const billData = Object.fromEntries(formData.entries());
+
+  //   // Add the project ID to the bill data
+  //   billData.projectId = selectedProject?._id;
+
+  //   try {
+  //     // Send POST request to the API
+  //     const response = await axios.post(
+  //       "http://localhost:3000/api/bills",
+  //       billData
+  //     );
+
+  //     if (response.status === 201) {
+  //       // Show success message
+  //       console.log("Bill added successfully:", response.data);
+  //       alert("Bill added successfully!");
+
+  //       // Close modal and reset form if needed
+  //       closeBillModal();
+  //     } else {
+  //       // Handle unexpected responses
+  //       console.error("Unexpected response:", response);
+  //       alert("Something went wrong. Please try again.");
+  //     }
+  //   } catch (error) {
+  //     // Handle errors during the API call
+  //     console.error("Error adding bill:", error);
+  //     alert("Failed to add bill. Please check your inputs and try again.");
+  //   }
+  // };
+
+  //bill data
+
+  const generateUniqueBillNo = () =>
+    `BILLNO-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+
+  const handleGenerateBillNo = () => {
+    setFormBillData((prevData) => ({
+      ...prevData,
+      billNumber: generateUniqueBillNo(),
+    }));
+  };
+
+  const handleBillChange = (e) => {
+    const { name, value } = e.target;
+    setFormBillData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  // const handleProjectSelect = (e) => {
+  //   const selectedProjectId = e.target.value;
+  //   setSelectedProject(selectedProjectId);
+
+  //   const project = projects.find((p) => p._id === selectedProjectId);
+  //   if (project) {
+  //     setFormBillData({
+  //       ...formBillData,
+  //       projectName: project.projectName,
+  //       description: project.description || "",
+  //       quantity: project.quantity,
+  //       rate: project.rate,
+  //       billedTo: project.billedTo?.clientName || "",
+  //       cgst: project.CGST,
+  //       sgst: project.SGST,
+  //       igst: project.IGST,
+  //       tds: project.TDS,
+  //     });
+  //   }
+  // };
+
   const handleBillSubmit = async (e) => {
     e.preventDefault();
-
-    // Collect form data
-    const formData = new FormData(e.target);
-    const billData = Object.fromEntries(formData.entries());
-
-    // Add the project ID to the bill data
-    billData.projectId = selectedProject?._id;
-
     try {
-      // Send POST request to the API
-      const response = await axios.post(
-        "http://localhost:3000/api/bills",
-        billData
-      );
-
-      if (response.status === 201) {
-        // Show success message
-        console.log("Bill added successfully:", response.data);
-        alert("Bill added successfully!");
-
-        // Close modal and reset form if needed
-        closeBillModal();
+      if (editBillMode) {
+        await axios.put(
+          `http://localhost:3000/api/bills/${selectedBill._id}`,
+          formBillData
+        );
+        setBills((prevBills) =>
+          prevBills.map((bill) =>
+            bill._id === selectedBill._id ? { ...bill, ...formBillData } : bill
+          )
+        );
+        alert("Bill updated successfully!");
       } else {
-        // Handle unexpected responses
-        console.error("Unexpected response:", response);
-        alert("Something went wrong. Please try again.");
+        const response = await axios.post(
+          "http://localhost:3000/api/bills",
+          formBillData
+        );
+
+        const updatedProject = {
+          ...projects.find((p) => p._id === selectedProject),
+          quantity:
+            projects.find((p) => p._id === selectedProject).quantity -
+            formBillData.billedQuantity,
+        };
+
+        await axios.put(
+          `http://localhost:3000/api/projects/${selectedProject}`,
+          {
+            quantity: updatedProject.quantity,
+          }
+        );
+
+        // setProjects((prev) =>
+        //   prev.map((p) => (p._id === selectedProject ? updatedProject : p))
+        // );
+
+        setBills((prev) => [...prev, response.data.bill]);
+        alert("Bill created successfully!");
       }
+      setShowBillModal(false);
+      setFormBillData({
+        date: "",
+        billNumber: "",
+        billedTo: "",
+        description: "",
+        quantity: "",
+        rate: "",
+        billedQuantity: "",
+      });
     } catch (error) {
-      // Handle errors during the API call
-      console.error("Error adding bill:", error);
-      alert("Failed to add bill. Please check your inputs and try again.");
+      console.error("Error submitting bill:", error);
+      alert("Failed to create or update the bill.");
     }
   };
 
@@ -302,7 +455,12 @@ const AddProject = () => {
             Add Project
           </button>
           <button
-            onClick={openBillModal}
+            onClick={() => {
+              if (isBillButtonEnabled) {
+                openBillModal(); // Call openBillModal first
+                handleGenerateBillNo(); // Then call handleGenerateBillNo
+              }
+            }}
             className={`px-6 py-3 rounded-lg shadow-md ${
               isBillButtonEnabled
                 ? "bg-green-600 text-white hover:bg-green-700"
@@ -314,7 +472,6 @@ const AddProject = () => {
           </button>
         </div>
 
-<<<<<<< HEAD
         {showForm && (
           <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
             <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
@@ -459,140 +616,6 @@ const AddProject = () => {
                     disabled
                   /> */}
                 </div>
-=======
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="mt-6 bg-white shadow-lg rounded-lg p-8 space-y-6"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <input
-              type="text"
-              name="projectName"
-              placeholder="Project Name"
-              value={formData.projectName}
-              onChange={handleInputChange}
-              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="text"
-              name="projectAddress"
-              placeholder="Project Address"
-              value={formData.projectAddress}
-              onChange={handleInputChange}
-              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <select
-              name="TDS"
-              value={formData.TDS}
-              onChange={handleDropdownChange}
-              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value={0}>Select TDS</option>
-              <option value={1}>1%</option>
-              <option value={2}>2%</option>
-              <option value={5}>5%</option>
-            </select>
-            <select
-              name="CGST"
-              value={formData.CGST}
-              onChange={handleDropdownChange}
-              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-            >
-              <option value={0}>Select CGST</option>
-              <option value={5}>5%</option>
-              <option value={12}>12%</option>
-              <option value={18}>18%</option>
-            </select>
-            <select
-              name="SGST"
-              value={formData.SGST}
-              onChange={handleDropdownChange}
-              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-            >
-              <option value={0}>Select SGST</option>
-              <option value={5}>5%</option>
-              <option value={12}>12%</option>
-              <option value={18}>18%</option>
-            </select>
-            <select
-              name="IGST"
-              value={formData.IGST}
-              onChange={handleDropdownChange}
-              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-            >
-              <option value={0}>Select IGST</option>
-              <option value={5}>5%</option>
-              <option value={12}>12%</option>
-              <option value={18}>18%</option>
-            </select>
-            <select
-              name="billedTo"
-              value={formData.billedTo}
-              onChange={handleInputChange}
-              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="">Select Client</option>
-              {clients.map((client) => (
-                <option key={client._id} value={client._id}>
-                  {client.clientName} - {client.GSTIN}
-                </option>
-              ))}
-            </select>
-            <input
-              type="text"
-              name="billedBy"
-              placeholder="Billed By"
-              value={formData.billedBy}
-              onChange={handleInputChange}
-              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <textarea
-              name="description"
-              placeholder="Description"
-              value={formData.description}
-              onChange={handleInputChange}
-              className="p-3 border border-gray-300 rounded-lg w-full h-24 focus:ring-2 focus:ring-blue-500"
-              required
-            ></textarea>
-            <input
-              type="number"
-              name="quantity"
-              placeholder="Quantity"
-              value={formData.quantity}
-              onChange={handleInputChange}
-              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="number"
-              name="rate"
-              placeholder="Rate"
-              value={formData.rate}
-              onChange={handleInputChange}
-              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <input
-              type="file"
-              onChange={handleFileChange}
-              className="p-3 border border-gray-300 rounded-lg w-full"
-            />
-            <input
-              type="number"
-              name="price"
-              placeholder="Total Price"
-              value={formData.price}
-              className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-              disabled
-            />
-          </div>
->>>>>>> 369b485f29d2c2e95baf317b897bd956a5b1d737
 
                 <button
                   type="submit"
@@ -690,62 +713,85 @@ const AddProject = () => {
         </table>
 
         {showBillModal && (
-          <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-              <h2 className="text-xl font-semibold mb-4 text-center">
-                Add Bill for {selectedProject?.projectName}
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+            <div className="bg-white p-6 rounded shadow-lg w-1/3">
+              <h2 className="text-xl font-bold mb-4">
+                {editBillMode ? "Edit Bill" : "Add Bill"}
               </h2>
               <form onSubmit={handleBillSubmit}>
-                {/* Project Name */}
+                {/* Date */}
+                <div className="mb-4 mt-4">
+                  <label htmlFor="date" className="block text-sm font-medium">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    id="date"
+                    name="date"
+                    value={formBillData.date}
+                    onChange={handleBillChange}
+                    className="w-full border border-gray-300 p-2 rounded"
+                    required
+                  />
+                </div>
+
+                {/* Project Selection */}
+                {/* <div className="mb-4">
+                  <label
+                    htmlFor="projectName"
+                    className="block text-sm font-medium"
+                  >
+                    Project
+                  </label>
+                  <select
+                    id="projectName"
+                    name="projectName"
+                    value={selectedProject}
+                    onChange={handleProjectSelect}
+                    className="w-full border border-gray-300 p-2 rounded"
+                    required
+                  >
+                    <option value="">Select a project</option>
+                    {projects.map((project) => (
+                      <option key={project._id} value={project._id}>
+                        {project.projectName}
+                      </option>
+                    ))}
+                  </select>
+                </div> */}
+                {/* Project Name Display */}
                 <div className="mb-4">
                   <label
                     htmlFor="projectName"
-                    className="block text-sm font-medium mb-1"
+                    className="block text-sm font-medium"
                   >
-                    Project Name
+                    Project
                   </label>
                   <input
                     type="text"
                     id="projectName"
                     name="projectName"
-                    value={selectedProject?.projectName || ""}
-                    className="p-3 border border-gray-300 rounded-lg w-full"
-                    disabled
+                    value={selectedProject ? selectedProject.projectName : ""}
+                    readOnly
+                    className="w-full border border-gray-300 p-2 rounded"
                   />
                 </div>
 
-                {/* Order Number */}
+                {/* Bill Number */}
                 <div className="mb-4">
                   <label
-                    htmlFor="orderNumber"
-                    className="block text-sm font-medium mb-1"
+                    htmlFor="billNumber"
+                    className="block text-sm font-medium"
                   >
-                    Order Number
+                    Bill Number
                   </label>
                   <input
                     type="text"
-                    id="orderNumber"
-                    name="orderNumber"
-                    value={selectedProject?.orderNumber || ""}
-                    className="p-3 border border-gray-300 rounded-lg w-full"
-                    disabled
-                  />
-                </div>
-
-                {/* Billed By */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="billedBy"
-                    className="block text-sm font-medium mb-1"
-                  >
-                    Billed By
-                  </label>
-                  <input
-                    type="text"
-                    id="billedBy"
-                    name="billedBy"
-                    placeholder="Enter Biller Name"
-                    className="p-3 border border-gray-300 rounded-lg w-full"
+                    id="billNumber"
+                    name="billNumber"
+                    value={formBillData.billNumber}
+                    readOnly
+                    className="w-full border border-gray-300 p-2 rounded"
                     required
                   />
                 </div>
@@ -754,7 +800,7 @@ const AddProject = () => {
                 <div className="mb-4">
                   <label
                     htmlFor="billedTo"
-                    className="block text-sm font-medium mb-1"
+                    className="block text-sm font-medium"
                   >
                     Billed To
                   </label>
@@ -762,8 +808,9 @@ const AddProject = () => {
                     type="text"
                     id="billedTo"
                     name="billedTo"
-                    placeholder="Enter Receiver Name"
-                    className="p-3 border border-gray-300 rounded-lg w-full"
+                    value={formBillData.billedTo}
+                    readOnly
+                    className="w-full border border-gray-300 p-2 rounded"
                     required
                   />
                 </div>
@@ -772,53 +819,96 @@ const AddProject = () => {
                 <div className="mb-4">
                   <label
                     htmlFor="description"
-                    className="block text-sm font-medium mb-1"
+                    className="block text-sm font-medium"
                   >
                     Description
                   </label>
                   <textarea
                     id="description"
                     name="description"
-                    placeholder="Enter Bill Description"
-                    className="p-3 border border-gray-300 rounded-lg w-full"
-                    rows="3"
-                  />
-                </div>
-
-                {/* Amount */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="amount"
-                    className="block text-sm font-medium mb-1"
-                  >
-                    Amount
-                  </label>
-                  <input
-                    type="number"
-                    id="amount"
-                    name="amount"
-                    placeholder="Enter Amount"
-                    className="p-3 border border-gray-300 rounded-lg w-full"
+                    value={formBillData.description}
+                    onChange={handleBillChange}
+                    className="w-full border border-gray-300 p-2 rounded"
                     required
                   />
                 </div>
 
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  className="w-full py-3 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition duration-300 mt-4"
-                >
-                  Submit Bill
-                </button>
-              </form>
+                {/* Quantity */}
+                <div className="mb-4">
+                  <label
+                    htmlFor="quantity"
+                    className="block text-sm font-medium"
+                  >
+                    Quantity
+                  </label>
+                  <input
+                    type="number"
+                    id="quantity"
+                    name="quantity"
+                    value={formBillData.quantity}
+                    onChange={handleBillChange}
+                    className="w-full border border-gray-300 p-2 rounded"
+                    required
+                  />
+                </div>
 
-              {/* Close Button */}
-              <button
-                onClick={closeBillModal}
-                className="mt-4 py-2 px-6 bg-red-500 text-white rounded-lg hover:bg-red-600 w-full"
-              >
-                Close
-              </button>
+                {/* Rate */}
+                <div className="mb-4">
+                  <label htmlFor="rate" className="block text-sm font-medium">
+                    Rate
+                  </label>
+                  <input
+                    type="number"
+                    id="rate"
+                    name="rate"
+                    value={formBillData.rate}
+                    onChange={handleBillChange}
+                    className="w-full border border-gray-300 p-2 rounded"
+                    required
+                  />
+                </div>
+
+                {/* Billed Quantity */}
+                <div className="mb-4">
+                  <label
+                    htmlFor="billedQuantity"
+                    className="block text-sm font-medium"
+                  >
+                    Billed Quantity
+                  </label>
+                  <input
+                    type="number"
+                    id="billedQuantity"
+                    name="billedQuantity"
+                    value={formBillData.billedQuantity}
+                    onChange={(e) =>
+                      setFormBillData({
+                        ...formBillData,
+                        billedQuantity: e.target.value,
+                      })
+                    }
+                    className="w-full border border-gray-300 p-2 rounded"
+                    required
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end mt-4">
+                  <button
+                    type="button"
+                    className="bg-gray-300 px-4 py-2 rounded mr-2"
+                    onClick={() => setShowBillModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-4 py-2 rounded"
+                  >
+                    {editBillMode ? "Update Bill" : "Add Bill"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
