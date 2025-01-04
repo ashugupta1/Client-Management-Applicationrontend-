@@ -44,7 +44,7 @@ const BillSection = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [bills]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -71,6 +71,8 @@ const BillSection = () => {
 
     const project = projects.find((p) => p._id === selectedProjectId);
     if (project) {
+      console.log(project);
+
       setFormBillData({
         ...formBillData,
         projectName: project.projectName,
@@ -90,6 +92,8 @@ const BillSection = () => {
     e.preventDefault();
     try {
       if (editBillMode) {
+        console.log(formBillData);
+
         await axios.put(
           `http://localhost:3000/api/bills/${selectedBill._id}`,
           formBillData
@@ -97,15 +101,18 @@ const BillSection = () => {
 
         const updatedProject = {
           ...projects.find((p) => p._id === selectedProject),
-          quantity:
-            projects.find((p) => p._id === selectedProject).quantity -
+          unbilledQuantity:
+            projects.find((p) => p._id === selectedProject).unbilledQuantity -
             formBillData.billedQuantity,
         };
-        
-        await axios.put(`http://localhost:3000/api/projects/${selectedProject}`, {
-          quantity: updatedProject.quantity,
-        });
-        
+
+        await axios.put(
+          `http://localhost:3000/api/projects/${selectedProject}`,
+          {
+            unbilledQuantity: updatedProject.unbilledQuantity,
+          }
+        );
+
         setBills((prevBills) =>
           prevBills.map((bill) =>
             bill._id === selectedBill._id ? { ...bill, ...formBillData } : bill
@@ -120,14 +127,17 @@ const BillSection = () => {
 
         const updatedProject = {
           ...projects.find((p) => p._id === selectedProject),
-          quantity:
-            projects.find((p) => p._id === selectedProject).quantity -
+          unbilledQuantity:
+            projects.find((p) => p._id === selectedProject).unbilledQuantity -
             formBillData.billedQuantity,
         };
-        
-        await axios.put(`http://localhost:3000/api/projects/${selectedProject}`, {
-          quantity: updatedProject.quantity,
-        });
+
+        await axios.put(
+          `http://localhost:3000/api/projects/${selectedProject}`,
+          {
+            unbilledQuantity: updatedProject.unbilledQuantity,
+          }
+        );
 
         setBills((prev) => [...prev, response.data.bill]);
         alert("Bill created successfully!");

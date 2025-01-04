@@ -13,6 +13,7 @@ const AddProject = () => {
   const [currentProjectId, setCurrentProjectId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isBillButtonEnabled, setBillButtonEnabled] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
 
   //bill data
   const [bills, setBills] = useState([]);
@@ -52,6 +53,7 @@ const AddProject = () => {
     rate: 0,
     // price: 0,
     total: 0,
+    unbilledQuantity: 0,
   });
   const navigate = useNavigate();
 
@@ -141,6 +143,7 @@ const AddProject = () => {
       rate: formData.rate,
       // price: formData.price,
       fileUpload: formData.fileUpload || null,
+      unbilledQuantity: formData.quantity,
     };
 
     console.log("Data to Submit:", dataToSubmit);
@@ -203,6 +206,7 @@ const AddProject = () => {
       rate: 0,
       // price: 0,
       total: 0,
+      unbilledQuantity: 0,
     });
   };
 
@@ -240,25 +244,13 @@ const AddProject = () => {
     }
   };
 
-  // const handleProjectCheckbox = (project) => {
-  //   if (selectedProject && selectedProject._id === project._id) {
-  //     // Deselect if already selected
-  //     setSelectedProject(null);
-  //     setBillButtonEnabled(false);
-  //   } else {
-  //     // Select the project
-  //     console.log(project);
-
-  //     setSelectedProject(project);
-  //     setBillButtonEnabled(true);
-  //   }
-  // };
-
   const handleProjectCheckbox = (project) => {
     if (selectedProject && selectedProject._id === project._id) {
       // Deselect if already selected
       setSelectedProject(null);
       setBillButtonEnabled(false);
+      setSelectedProjectId(null);
+
       setFormBillData({
         date: "",
         projectName: "",
@@ -276,14 +268,17 @@ const AddProject = () => {
     } else {
       // Select the project and spread its data into form fields
       setSelectedProject(project);
+      console.log("SET");
+
+      setSelectedProjectId(project._id);
       setBillButtonEnabled(true);
       setFormBillData({
         date: project.date || "", // If the project has a date property
         projectName: project.projectName || "",
-        billNumber: project.billNumber || "", // You might need to generate this dynamically
-        billedTo: project.billedTo || "",
+        billNumber: handleGenerateBillNo() || "", // You might need to generate this dynamically
+        billedTo: project.billedTo.clientName || "",
         description: project.description || "",
-        quantity: project.quantity || "",
+        quantity: project.unbilledQuantity || "",
         rate: project.rate || "",
         billedQuantity: project.billedQuantity || "",
         tds: project.TDS || "",
@@ -293,44 +288,6 @@ const AddProject = () => {
       });
     }
   };
-
-  // const handleBillSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   // Collect form data
-  //   const formData = new FormData(e.target);
-  //   const billData = Object.fromEntries(formData.entries());
-
-  //   // Add the project ID to the bill data
-  //   billData.projectId = selectedProject?._id;
-
-  //   try {
-  //     // Send POST request to the API
-  //     const response = await axios.post(
-  //       "http://localhost:3000/api/bills",
-  //       billData
-  //     );
-
-  //     if (response.status === 201) {
-  //       // Show success message
-  //       console.log("Bill added successfully:", response.data);
-  //       alert("Bill added successfully!");
-
-  //       // Close modal and reset form if needed
-  //       closeBillModal();
-  //     } else {
-  //       // Handle unexpected responses
-  //       console.error("Unexpected response:", response);
-  //       alert("Something went wrong. Please try again.");
-  //     }
-  //   } catch (error) {
-  //     // Handle errors during the API call
-  //     console.error("Error adding bill:", error);
-  //     alert("Failed to add bill. Please check your inputs and try again.");
-  //   }
-  // };
-
-  //bill data
 
   const generateUniqueBillNo = () =>
     `BILLNO-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
@@ -347,69 +304,44 @@ const AddProject = () => {
     setFormBillData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  // const handleProjectSelect = (e) => {
-  //   const selectedProjectId = e.target.value;
-  //   setSelectedProject(selectedProjectId);
-
-  //   const project = projects.find((p) => p._id === selectedProjectId);
-  //   if (project) {
-  //     setFormBillData({
-  //       ...formBillData,
-  //       projectName: project.projectName,
-  //       description: project.description || "",
-  //       quantity: project.quantity,
-  //       rate: project.rate,
-  //       billedTo: project.billedTo?.clientName || "",
-  //       cgst: project.CGST,
-  //       sgst: project.SGST,
-  //       igst: project.IGST,
-  //       tds: project.TDS,
-  //     });
-  //   }
-  // };
-
   const handleBillSubmit = async (e) => {
+    const billedQuantity = Number(formBillData.billedQuantity);
+    console.log("Billed Quantity:", billedQuantity);
+    console.log(" Unbilled Quantity:", formBillData.quantity);
+
+    // console.log(project._id);
+
     e.preventDefault();
     try {
-      if (editBillMode) {
-        await axios.put(
-          `http://localhost:3000/api/bills/${selectedBill._id}`,
-          formBillData
-        );
-        setBills((prevBills) =>
-          prevBills.map((bill) =>
-            bill._id === selectedBill._id ? { ...bill, ...formBillData } : bill
-          )
-        );
-        alert("Bill updated successfully!");
-      } else {
-        const response = await axios.post(
-          "http://localhost:3000/api/bills",
-          formBillData
-        );
+      // Create a new bill
+      const response = await axios.post(
+        "http://localhost:3000/api/bills",
+        formBillData
+      );
 
-        const updatedProject = {
-          ...projects.find((p) => p._id === selectedProject),
-          quantity:
-            projects.find((p) => p._id === selectedProject).quantity -
-            formBillData.billedQuantity,
-        };
+      // Add the new bill to the bills list
+      setBills((prev) => [...prev, response.data.bill]);
 
-        await axios.put(
-          `http://localhost:3000/api/projects/${selectedProject}`,
-          {
-            quantity: updatedProject.quantity,
-          }
-        );
-
-        // setProjects((prev) =>
-        //   prev.map((p) => (p._id === selectedProject ? updatedProject : p))
-        // );
-
-        setBills((prev) => [...prev, response.data.bill]);
-        alert("Bill created successfully!");
+      // Update the project with the new quantity
+      const updatedQuantity = formBillData.quantity - billedQuantity;
+      if (updatedQuantity < 0) {
+        alert("Billed quantity cannot exceed the available quantity.");
+        return;
       }
-      setShowBillModal(false);
+
+      if (selectedProjectId) {
+        const projectUpdateResponse = await axios.put(
+          `http://localhost:3000/api/projects/${selectedProjectId}`,
+          { unbilledQuantity: updatedQuantity }
+        );
+
+        console.log("Updated Project:", projectUpdateResponse.data);
+      }
+
+      alert("Bill created and project updated successfully!");
+      navigate("/bills");
+
+      // Reset form data after successful submission
       setFormBillData({
         date: "",
         billNumber: "",
@@ -419,9 +351,12 @@ const AddProject = () => {
         rate: "",
         billedQuantity: "",
       });
+
+      // Close the modal
+      setShowBillModal(false);
     } catch (error) {
-      console.error("Error submitting bill:", error);
-      alert("Failed to create or update the bill.");
+      console.error("Error submitting bill or updating project:", error);
+      alert("Failed to create the bill or update the project.");
     }
   };
 
@@ -688,7 +623,7 @@ const AddProject = () => {
                   {project.fileUpload ? "File Uploaded" : "No File"}
                 </td>
                 <td className="border p-2">{project.quantity}</td>
-                <td className="border p-2">{project.quantity}</td>
+                <td className="border p-2">{project.unbilledQuantity}</td>
                 <td className="border p-2">{project.rate}</td>
                 <td className="border p-2">
                   {project.rate * project.quantity}
@@ -735,31 +670,8 @@ const AddProject = () => {
                   />
                 </div>
 
-                {/* Project Selection */}
-                {/* <div className="mb-4">
-                  <label
-                    htmlFor="projectName"
-                    className="block text-sm font-medium"
-                  >
-                    Project
-                  </label>
-                  <select
-                    id="projectName"
-                    name="projectName"
-                    value={selectedProject}
-                    onChange={handleProjectSelect}
-                    className="w-full border border-gray-300 p-2 rounded"
-                    required
-                  >
-                    <option value="">Select a project</option>
-                    {projects.map((project) => (
-                      <option key={project._id} value={project._id}>
-                        {project.projectName}
-                      </option>
-                    ))}
-                  </select>
-                </div> */}
                 {/* Project Name Display */}
+
                 <div className="mb-4">
                   <label
                     htmlFor="projectName"
@@ -771,7 +683,7 @@ const AddProject = () => {
                     type="text"
                     id="projectName"
                     name="projectName"
-                    value={selectedProject ? selectedProject.projectName : ""}
+                    value={formBillData.projectName || ""}
                     readOnly
                     className="w-full border border-gray-300 p-2 rounded"
                   />
