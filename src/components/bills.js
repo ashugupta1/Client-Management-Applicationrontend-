@@ -42,6 +42,8 @@ const BillSection = () => {
       try {
         const billsRes = await axios.get("http://localhost:3000/api/bills");
         setBills(billsRes.data || []);
+        console.log(billsRes.data);
+        
       } catch (err) {
         console.error("Error fetching bills:", err);
       }

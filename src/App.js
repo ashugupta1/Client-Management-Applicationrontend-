@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ClientSection from "./components/client";
 import Project from "./components/project";
 import Bills from "./components/bills";
+import SiteExpense from "./components/siteExpense";
 
 function App() {
   return (
@@ -48,6 +49,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Bills />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/expense"
+          element={
+            <ProtectedRoute>
+              <SiteExpense />
             </ProtectedRoute>
           }
         />

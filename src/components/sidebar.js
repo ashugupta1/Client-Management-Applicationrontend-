@@ -37,6 +37,14 @@ export default function Sidebar() {
                 Bills
               </a>
             </li>
+            <li>
+              <a
+                href="/expense"
+                className="block px-4 py-2 hover:bg-gray-600 rounded-b-md"
+              >
+                Site Expense
+              </a>
+            </li>
           </ul>
         </li>
       </ul>
