@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "./sidebar";
+import Icon from "react-crud-icons";
+
+import "./react-crud-icons.css";
 
 const BillSection = () => {
   const [bills, setBills] = useState([]);
   const [projects, setProjects] = useState([]);
   const [showBillModal, setShowBillModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState("");
-  const [editBillMode, setEditBillMode] = useState(false); // Track if we are editing
-  const [selectedBill, setSelectedBill] = useState(null); // Store the bill to be edited
+  const [editBillMode, setEditBillMode] = useState(false);
+  const [selectedBill, setSelectedBill] = useState(null);
   const [formBillData, setFormBillData] = useState({
     date: "",
     billNumber: "",
@@ -106,6 +109,11 @@ const BillSection = () => {
             formBillData.billedQuantity,
         };
 
+        if (updatedProject.unbilledQuantity < 0) {
+          alert("Billed quantity cannot exceed the available quantity.");
+          return;
+        }
+
         await axios.put(
           `http://localhost:3000/api/projects/${selectedProject}`,
           {
@@ -131,6 +139,11 @@ const BillSection = () => {
             projects.find((p) => p._id === selectedProject).unbilledQuantity -
             formBillData.billedQuantity,
         };
+
+        if (updatedProject.unbilledQuantity < 0) {
+          alert("Billed quantity cannot exceed the available quantity.");
+          return;
+        }
 
         await axios.put(
           `http://localhost:3000/api/projects/${selectedProject}`,
@@ -242,13 +255,25 @@ const BillSection = () => {
                       className="text-blue-500"
                       onClick={() => handleBillEdit(bill)}
                     >
-                      Edit
+                      <Icon
+                        name="edit"
+                        tooltip="Edit"
+                        theme="light"
+                        size="medium"
+                        // onClick={doSomething}
+                      />
                     </button>
                     <button
                       className="text-red-500 ml-2"
                       onClick={() => handleBillDelete(bill._id)}
                     >
-                      Delete
+                      <Icon
+                        name="delete"
+                        tooltip="Delete"
+                        theme="light"
+                        size="medium"
+                        // onClick={doSomething}
+                      />
                     </button>
                   </td>
                 </tr>
@@ -287,6 +312,56 @@ const BillSection = () => {
                   >
                     Project
                   </label>
+                  {editBillMode === "Edit Bill"
+                    ? (console.log("if true ", editBillMode),
+                      (
+                        // Render a text field when in edit mode
+                        <div className="mb-4">
+                          <label
+                            htmlFor="billNumber"
+                            className="block text-sm font-medium"
+                          >
+                            Bill Number
+                          </label>
+                          <input
+                            type="text"
+                            id="projectName"
+                            name="projectName"
+                            value={formBillData.projectName}
+                            readOnly
+                            className="w-full border border-gray-300 p-2 rounded"
+                            required
+                          />
+                        </div>
+                      ))
+                    : // Render a dropdown when in create mode
+                      (console.log("if false ", editBillMode),
+                      (
+                        <select
+                          id="projectName"
+                          name="projectName"
+                          value={selectedProject}
+                          onChange={handleProjectSelect}
+                          className="w-full border border-gray-300 p-2 rounded"
+                          required
+                        >
+                          <option value="">Select a project</option>
+                          {projects.map((project) => (
+                            <option key={project._id} value={project._id}>
+                              {project.projectName}
+                            </option>
+                          ))}
+                        </select>
+                      ))}
+                </div>
+
+                {/* <div className="mb-4">
+                  <label
+                    htmlFor="projectName"
+                    className="block text-sm font-medium"
+                  >
+                    Project
+                  </label>
                   <select
                     id="projectName"
                     name="projectName"
@@ -302,7 +377,7 @@ const BillSection = () => {
                       </option>
                     ))}
                   </select>
-                </div>
+                </div> */}
 
                 {/* Bill Number */}
                 <div className="mb-4">

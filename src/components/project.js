@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./sidebar";
+import Icon from "react-crud-icons";
+
+import "./react-crud-icons.css";
 
 const AddProject = () => {
   const [showForm, setShowForm] = useState(false);
@@ -14,6 +17,7 @@ const AddProject = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isBillButtonEnabled, setBillButtonEnabled] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [status, setStatus] = useState(false);
 
   //bill data
   const [bills, setBills] = useState([]);
@@ -588,6 +592,7 @@ const AddProject = () => {
               <th className="p-4 border">File</th>
               <th className="p-4 border">Quantity</th>
               <th className="p-4 border">Unbilled Quantity</th>
+              <th className="p-4 border">Status</th>
               <th className="p-4 border">Rate</th>
               <th className="p-4 border">Total</th>
               <th className="p-4 border">Action</th>
@@ -624,23 +629,42 @@ const AddProject = () => {
                 </td>
                 <td className="border p-2">{project.quantity}</td>
                 <td className="border p-2">{project.unbilledQuantity}</td>
+                <td>
+                  <div className="h-full flex item-center justify-center">
+                    <button
+                      className={`border p-2 text-center text-white rounded-lg
+
+ ${project.unbilledQuantity > 0 ? "bg-red-900" : "bg-green-600"}`}
+                    >{`${
+                      project.unbilledQuantity > 0 ? "Pending" : "Completed"
+                    }`}</button>
+                  </div>
+                </td>
                 <td className="border p-2">{project.rate}</td>
                 <td className="border p-2">
                   {project.rate * project.quantity}
                 </td>
                 <td className="border p-2 text-center space-x-4">
-                  <button
-                    onClick={() => handleEdit(project)}
-                    className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition duration-300"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(project._id)}
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-300"
-                  >
-                    Delete
-                  </button>
+                  <div className=" flex flex-row">
+                    <button onClick={() => handleEdit(project)}>
+                      <Icon
+                        name="edit"
+                        tooltip="Edit"
+                        theme="light"
+                        size="medium"
+                        // onClick={doSomething}
+                      />
+                    </button>
+                    <button onClick={() => handleDelete(project._id)}>
+                      <Icon
+                        name="delete"
+                        tooltip="Delete"
+                        theme="light"
+                        size="medium"
+                        // onClick={doSomething}
+                      />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
