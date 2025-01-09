@@ -11,6 +11,9 @@ const SiteExpense = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectExpense, setSelectExpense] = useState(null);
   const [editExpense, setEditExpense] = useState(false);
+  const [addRows, setAddRows] = useState([]);
+  const [viewExpense, setViewExpense] = useState(null);
+  const [viewRowForm, setViewRowForm] = useState(false);
 
   const [formData, setFormData] = useState({
     User: "",
@@ -40,7 +43,6 @@ const SiteExpense = () => {
   }, []);
 
   // Fetch Expenses
-
   const fetchExpenses = async () => {
     try {
       const expensesRes = await axios.get("http://localhost:3000/api/expense");
@@ -74,21 +76,28 @@ const SiteExpense = () => {
   const handleFormSubmit = async (event) => {
     event.preventDefault();
 
+    const formDataWithRows = {
+      ...formData,
+      Rows: addRows, // Add the rows data here
+    };
+
+    console.log(formDataWithRows);
+
     if (editExpense) {
-      console.log("in edit mode ", formData);
+      console.log("in edit mode ", formDataWithRows);
       try {
         axios.put(
           `http://localhost:3000/api/expense/${selectExpense._id}`,
-          formData
+          formDataWithRows
         );
         fetchExpenses();
       } catch (error) {
         console.log("getting error while update data", error);
       }
     } else {
-      console.log("in post mode ", formData);
+      console.log("in post mode ", formDataWithRows);
       try {
-        axios.post("http://localhost:3000/api/expense", formData);
+        axios.post("http://localhost:3000/api/expense", formDataWithRows);
         fetchExpenses();
         alert("expense successfully added...");
       } catch (error) {
@@ -111,9 +120,16 @@ const SiteExpense = () => {
     });
   };
 
+  const handleViewExpense = async (expense) => {
+    const rows = Array.isArray(expense.Rows) ? expense.Rows : [expense.Rows];
+    setViewExpense(rows);
+  };
+
+  const closeModal = () => setViewRowForm(false);
+
   //expense edit
   const handleEditExpense = async (expense) => {
-    console.log("handle edit function ", expense);
+    console.log("handle edit function ", expense.Rows);
     setSelectExpense(expense);
     setFormData({
       User: expense.User || "",
@@ -124,8 +140,11 @@ const SiteExpense = () => {
       MOP: expense.MOP || "",
       ReferenceId: expense.ReferenceId || "",
       File: expense.File || null,
+      // Rows: expense.Rows || null,
       Remark: expense.Remark || "",
     });
+
+    setAddRows(expense.Rows || []);
 
     setShowForm(true);
     setEditExpense(true);
@@ -134,7 +153,7 @@ const SiteExpense = () => {
   //expense delete
   const handleDeleteExpense = async (id) => {
     try {
-      console.log(id);
+      // console.log(id);
 
       await axios.delete(`http://localhost:3000/api/expense/${id}`);
       setExpenses(expenses.filter((expense) => expense._id !== id));
@@ -143,6 +162,21 @@ const SiteExpense = () => {
       console.error("Error deleting expense:", error);
       alert("Failed to delete the expense.");
     }
+  };
+
+  // Add row option
+  const addRowField = () => {
+    setAddRows([...addRows, { Employee: "", Reason: "", Amount: "" }]);
+  };
+
+  const removeRowField = (index) => {
+    setAddRows(addRows.filter((_, i) => i !== index));
+  };
+
+  const handleRowChange = (index, field, value) => {
+    const updatedRows = [...addRows];
+    updatedRows[index][field] = value;
+    setAddRows(updatedRows);
   };
 
   return (
@@ -348,11 +382,101 @@ const SiteExpense = () => {
                   </div>
                 </div>
 
+                <button
+                  className="px-6 py-3 text-white rounded-md bg-green-700 hover:bg-green-800"
+                  type="button"
+                  onClick={() => addRowField()}
+                >
+                  Add Row
+                </button>
+
+                <form>
+                  {addRows.map((row, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-4 mb-4 border-t pt-4"
+                    >
+                      <div>
+                        <label
+                          htmlFor={`employee-${index}`}
+                          className="block text-sm font-medium text-gray-600"
+                        >
+                          Employee
+                        </label>
+                        <input
+                          type="text"
+                          id={`employee-${index}`}
+                          value={row.Employee}
+                          name="Employee"
+                          onChange={(e) =>
+                            handleRowChange(index, "Employee", e.target.value)
+                          }
+                          className="w-full px-4 py-3 border border-gray-300 rounded-md"
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor={`reason-${index}`}
+                          className="block text-sm font-medium text-gray-600"
+                        >
+                          Reason
+                        </label>
+                        <input
+                          type="text"
+                          id={`reason-${index}`}
+                          value={row.Reason}
+                          name="Reason"
+                          onChange={(e) =>
+                            handleRowChange(index, "Reason", e.target.value)
+                          }
+                          className="w-full px-4 py-3 border border-gray-300 rounded-md"
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor={`amount-${index}`}
+                          className="block text-sm font-medium text-gray-600"
+                        >
+                          Amount
+                        </label>
+                        <input
+                          type="number"
+                          id={`amount-${index}`}
+                          value={row.Amount}
+                          name="Amount"
+                          onChange={(e) =>
+                            handleRowChange(index, "Amount", e.target.value)
+                          }
+                          className="w-full px-4 py-3 border border-gray-300 rounded-md"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        className="text-red-500 mt-6"
+                        onClick={() => removeRowField(index)}
+                      >
+                        <Icon
+                          name="delete"
+                          tooltip="Delete"
+                          theme="light"
+                          size="medium"
+                        />
+                      </button>
+                    </div>
+                  ))}
+                </form>
+
                 {/* Buttons Section */}
                 <div className="flex justify-end space-x-6 mt-6">
                   <button
                     type="button"
-                    onClick={() => setShowForm(false)}
+                    onClick={() => {
+                      setShowForm(false);
+                      setAddRows([]);
+                    }}
                     className="px-6 py-3 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
                   >
                     Cancel
@@ -365,6 +489,47 @@ const SiteExpense = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {viewRowForm && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+              <div className="flex justify-between items-center border-b pb-3">
+                <h3 className="text-lg font-semibold">Expense Details</h3>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  ×
+                </button>
+              </div>
+
+              {viewExpense && viewExpense.length > 0 ? (
+                <table className="w-full bg-white border border-gray-300 rounded-lg shadow-md mt-4">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="border px-4 py-2 text-left">Employee</th>
+                      <th className="border px-4 py-2 text-left">Reason</th>
+                      <th className="border px-4 py-2 text-left">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {viewExpense.map((row, index) => (
+                      <tr key={index}>
+                        <td className="border px-4 py-2">{row.Employee}</td>
+                        <td className="border px-4 py-2">{row.Reason}</td>
+                        <td className="border px-4 py-2">{row.Amount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="text-center mt-4">
+                  <p className="text-gray-500">No Row Data Found</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -382,6 +547,7 @@ const SiteExpense = () => {
               <th className="border px-4 py-2 text-left">MOP</th>
               <th className="border px-4 py-2 text-left">Reference Id</th>
               <th className="border px-4 py-2 text-left">File</th>
+              <th className="border px-4 py-2 text-left">View</th>
               <th className="border px-4 py-2 text-left">Remark</th>
               <th className="border px-4 py-2 text-left">Action</th>
             </tr>
@@ -399,6 +565,22 @@ const SiteExpense = () => {
                   <td className="border px-4 py-2">{expense.MOP}</td>
                   <td className="border px-4 py-2">{expense.ReferenceId}</td>
                   <td className="border px-4 py-2">{expense.File}</td>
+                  <td className="border px-4 py-2">
+                    <button
+                      onClick={() => {
+                        handleViewExpense(expense);
+                        // setShowForm(true);
+                        setViewRowForm(true);
+                      }}
+                    >
+                      <Icon
+                        name="show"
+                        tooltip="Show"
+                        theme="light"
+                        size="medium"
+                      />
+                    </button>
+                  </td>
                   <td className="border px-4 py-2">{expense.Remark}</td>
                   <td className="border px-4 py-2">
                     <button onClick={() => handleEditExpense(expense)}>
@@ -416,7 +598,7 @@ const SiteExpense = () => {
                         tooltip="Delete"
                         theme="light"
                         size="medium"
-                        // onClick={doSomething}
+                        // onClick={showTable}
                       />
                     </button>
                   </td>
