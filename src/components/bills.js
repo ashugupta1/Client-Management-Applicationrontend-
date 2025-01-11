@@ -12,6 +12,9 @@ const BillSection = () => {
   const [selectedProject, setSelectedProject] = useState("");
   const [editBillMode, setEditBillMode] = useState(false);
   const [selectedBill, setSelectedBill] = useState(null);
+  const [billStatus, setBillStatus] = useState(false);
+  const [showBillStatus, setshowBillStatus] = useState(false);
+  const [unbilledQuantity, setUnbilledQuantity] = useState(0);
   const [formBillData, setFormBillData] = useState({
     date: "",
     billNumber: "",
@@ -43,7 +46,6 @@ const BillSection = () => {
         const billsRes = await axios.get("http://localhost:3000/api/bills");
         setBills(billsRes.data || []);
         console.log(billsRes.data);
-        
       } catch (err) {
         console.error("Error fetching bills:", err);
       }
@@ -111,6 +113,7 @@ const BillSection = () => {
             formBillData.billedQuantity,
         };
 
+        setUnbilledQuantity(updatedProject.unbilledQuantity);
         if (updatedProject.unbilledQuantity < 0) {
           alert("Billed quantity cannot exceed the available quantity.");
           return;
@@ -208,10 +211,12 @@ const BillSection = () => {
     setShowBillModal(true);
   };
 
+  //working with clear bill that sgst cgst and bbt
+
   return (
     <div className="flex">
       <Sidebar />
-      <div className="flex-1 p-4 bg-gray-100">
+      <div className="flex-1 p-4 bg-gray-100 w-5/6  h-screen">
         <h2 className="text-xl font-bold mb-4">Bill Section</h2>
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded"
@@ -223,65 +228,98 @@ const BillSection = () => {
         >
           Add Bill
         </button>
-        <div className="mt-6">
+        <div className="mt-6 ">
           <h3 className="text-lg font-semibold mb-4">Bill List</h3>
-          <table className="min-w-full bg-white border border-gray-300">
-            <thead>
-              <tr>
-                <th className="border px-4 py-2">S. No.</th>
-                <th className="border px-4 py-2">Date</th>
-                <th className="border px-4 py-2">Project Name</th>
-                <th className="border px-4 py-2">Bill Number</th>
-                <th className="border px-4 py-2">Billed Quantity</th>
-                <th className="border px-4 py-2">Balance Before Tax</th>
-                <th className="border px-4 py-2">TDS</th>
-                <th className="border px-4 py-2">Total Tax</th>
-                <th className="border px-4 py-2">Balance After Tax</th>
-                <th className="border px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bills.map((bill, index) => (
-                <tr key={bill._id}>
-                  <td className="border px-4 py-2">{index + 1}</td>
-                  <td className="border px-4 py-2">{bill.date}</td>
-                  <td className="border px-4 py-2">{bill.projectName}</td>
-                  <td className="border px-4 py-2">{bill.billNumber}</td>
-                  <td className="border px-4 py-2">{bill.billedQuantity}</td>
-                  <td className="border px-4 py-2">{bill.balanceBeforeTax}</td>
-                  <td className="border px-4 py-2">{bill.tds}</td>
-                  <td className="border px-4 py-2">{bill.totalTax}</td>
-                  <td className="border px-4 py-2">{bill.balanceAfterTax}</td>
-                  <td className="border px-4 py-2">
-                    <button
-                      className="text-blue-500"
-                      onClick={() => handleBillEdit(bill)}
-                    >
-                      <Icon
-                        name="edit"
-                        tooltip="Edit"
-                        theme="light"
-                        size="medium"
-                        // onClick={doSomething}
-                      />
-                    </button>
-                    <button
-                      className="text-red-500 ml-2"
-                      onClick={() => handleBillDelete(bill._id)}
-                    >
-                      <Icon
-                        name="delete"
-                        tooltip="Delete"
-                        theme="light"
-                        size="medium"
-                        // onClick={doSomething}
-                      />
-                    </button>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="min-w-max bg-white border border-gray-300 table-auto">
+              <thead>
+                <tr>
+                  <th className="border px-4 py-2">S. No.</th>
+                  <th className="border px-4 py-2">Date</th>
+                  <th className="border px-4 py-2">Project Name</th>
+                  <th className="border px-4 py-2">Bill Number</th>
+                  <th className="border px-4 py-2">Billed Quantity</th>
+                  <th className="border px-4 py-2">Balance Before Tax</th>
+                  <th className="border px-4 py-2">TDS</th>
+                  <th className="border px-4 py-2">Total Tax</th>
+                  <th className="border px-4 py-2">Balance After Tax</th>
+                  <th className="border px-4 py-2">Mile Stone</th>
+                  <th className="border px-4 py-2">Bill Status</th>
+                  <th className="border px-4 py-2">Clear Bill</th>
+                  <th className="border px-4 py-2">View Bill</th>
+                  <th className="border px-4 py-2">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {bills.map((bill, index) => (
+                  <tr key={bill._id}>
+                    <td className="border px-4 py-2">{index + 1}</td>
+                    <td className="border px-4 py-2">{bill.date}</td>
+                    <td className="border px-4 py-2">{bill.projectName}</td>
+                    <td className="border px-4 py-2">{bill.billNumber}</td>
+                    <td className="border px-4 py-2">{bill.billedQuantity}</td>
+                    <td className="border px-4 py-2">
+                      {bill.balanceBeforeTax}
+                    </td>
+                    <td className="border px-4 py-2">{bill.tds}</td>
+                    <td className="border px-4 py-2">{bill.totalTax}</td>
+                    <td className="border px-4 py-2">{bill.balanceAfterTax}</td>
+                    <td className="border px-4 py-2">Mile Stone</td>
+                    <td className="border px-4 py-2">
+                      <button class="bg-yellow-500 text-white font-bold py-2 px-4 rounded">
+                        Bill Status
+                      </button>
+                    </td>
+                    <td className="border px-4 py-2">
+                      <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Clear Bill
+                      </button>
+                    </td>
+                    <td className="border px-4 py-2">
+                      <button
+                        onClick={() => {
+                          // handleViewExpense(expense);
+                          // setShowForm(true);
+                          // setViewRowForm(true);
+                        }}
+                      >
+                        <Icon
+                          name="show"
+                          tooltip="Show"
+                          theme="light"
+                          size="medium"
+                        />
+                      </button>
+                    </td>
+                    <td className="border px-4 py-2">
+                      <button
+                        className="text-blue-500"
+                        onClick={() => handleBillEdit(bill)}
+                      >
+                        <Icon
+                          name="edit"
+                          tooltip="Edit"
+                          theme="light"
+                          size="medium"
+                        />
+                      </button>
+                      <button
+                        className="text-red-500 ml-2"
+                        onClick={() => handleBillDelete(bill._id)}
+                      >
+                        <Icon
+                          name="delete"
+                          tooltip="Delete"
+                          theme="light"
+                          size="medium"
+                        />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
         {showBillModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
@@ -449,7 +487,7 @@ const BillSection = () => {
                     type="number"
                     id="quantity"
                     name="quantity"
-                    value={formBillData.quantity}
+                    value={unbilledQuantity}
                     onChange={handleBillChange}
                     className="w-full border border-gray-300 p-2 rounded"
                     required
@@ -516,6 +554,9 @@ const BillSection = () => {
             </div>
           </div>
         )}
+
+        {/* view bill section  */}
+        {}
       </div>
     </div>
   );

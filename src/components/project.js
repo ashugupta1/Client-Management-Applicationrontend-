@@ -367,7 +367,7 @@ const AddProject = () => {
   return (
     <div className="flex">
       <Sidebar />
-      <div className="flex-1 p-4 bg-gray-100">
+      <div className="flex-1 p-4 bg-gray-100 w-5/6  h-screen">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-4xl font-semibold">Projects</h1>
           <button
@@ -574,102 +574,104 @@ const AddProject = () => {
         )}
 
         {/* Table */}
-        <table className="w-full border-collapse border border-gray-300">
-          <thead>
-            <tr>
-              <th className="p-4 border">Checkbox</th>
-              <th className="p-4 border">Serial</th>
-              <th className="p-4 border">Order Number</th>
-              <th className="p-4 border">Project Name</th>
-              <th className="p-4 border">Address</th>
-              <th className="p-4 border">IGST</th>
-              <th className="p-4 border">CGST</th>
-              <th className="p-4 border">SGST</th>
-              <th className="p-4 border">TDS</th>
-              <th className="p-4 border">Billed By</th>
-              <th className="p-4 border">Billed To</th>
-              <th className="p-4 border">Description</th>
-              <th className="p-4 border">File</th>
-              <th className="p-4 border">Quantity</th>
-              <th className="p-4 border">Unbilled Quantity</th>
-              <th className="p-4 border">Status</th>
-              <th className="p-4 border">Rate</th>
-              <th className="p-4 border">Total</th>
-              <th className="p-4 border">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProjects.map((project, index) => (
-              <tr key={project._id}>
-                <td className="border p-2">
-                  <input
-                    type="checkbox"
-                    onChange={() => handleProjectCheckbox(project)}
-                    checked={selectedProject?._id === project._id}
-                  />
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse border border-gray-300 table-auto min-w-max">
+            <thead>
+              <tr>
+                <th className="p-4 border">Checkbox</th>
+                <th className="p-4 border">Serial</th>
+                <th className="p-4 border">Order Number</th>
+                <th className="p-4 border">Project Name</th>
+                <th className="p-4 border">Address</th>
+                <th className="p-4 border">IGST</th>
+                <th className="p-4 border">CGST</th>
+                <th className="p-4 border">SGST</th>
+                <th className="p-4 border">TDS</th>
+                <th className="p-4 border">Billed By</th>
+                <th className="p-4 border">Billed To</th>
+                <th className="p-4 border">Description</th>
+                <th className="p-4 border">File</th>
+                <th className="p-4 border">Quantity</th>
+                <th className="p-4 border">Unbilled Quantity</th>
+                <th className="p-4 border">Status</th>
+                <th className="p-4 border">Rate</th>
+                <th className="p-4 border">Total</th>
+                <th className="p-4 border">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProjects.map((project, index) => (
+                <tr key={project._id}>
+                  <td className="border p-2">
+                    <input
+                      type="checkbox"
+                      onChange={() => handleProjectCheckbox(project)}
+                      checked={selectedProject?._id === project._id}
+                    />
+                  </td>
 
-                <td className="border p-2">{index + 1}</td>
-                <td className="border p-2">{project.orderNumber}</td>
-                <td className="border p-2">{project.projectName}</td>
-                <td className="border p-2">{project.projectAddress}</td>
-                <td className="border p-2">{project.IGST}</td>
-                <td className="border p-2">{project.CGST}</td>
-                <td className="border p-2">{project.SGST}</td>
-                <td className="border p-2">{project.TDS}</td>
-                <td className="border p-2">{project.billedBy}</td>
-                <td className="border p-2">
-                  {project.billedTo
-                    ? `${project.billedTo.clientName} (${project.billedTo.phone})`
-                    : "Not Assigned"}
-                </td>
-                <td className="border p-2">{project.description}</td>
-                <td className="border p-2">
-                  {project.fileUpload ? "File Uploaded" : "No File"}
-                </td>
-                <td className="border p-2">{project.quantity}</td>
-                <td className="border p-2">{project.unbilledQuantity}</td>
-                <td>
-                  <div className="h-full flex item-center justify-center">
-                    <button
-                      className={`border p-2 text-center text-white rounded-lg
+                  <td className="border p-2">{index + 1}</td>
+                  <td className="border p-2">{project.orderNumber}</td>
+                  <td className="border p-2">{project.projectName}</td>
+                  <td className="border p-2">{project.projectAddress}</td>
+                  <td className="border p-2">{project.IGST}</td>
+                  <td className="border p-2">{project.CGST}</td>
+                  <td className="border p-2">{project.SGST}</td>
+                  <td className="border p-2">{project.TDS}</td>
+                  <td className="border p-2">{project.billedBy}</td>
+                  <td className="border p-2">
+                    {project.billedTo
+                      ? `${project.billedTo.clientName} (${project.billedTo.phone})`
+                      : "Not Assigned"}
+                  </td>
+                  <td className="border p-2">{project.description}</td>
+                  <td className="border p-2">
+                    {project.fileUpload ? "File Uploaded" : "No File"}
+                  </td>
+                  <td className="border p-2">{project.quantity}</td>
+                  <td className="border p-2">{project.unbilledQuantity}</td>
+                  <td>
+                    <div className="h-full flex item-center justify-center">
+                      <button
+                        className={`border p-2 text-center text-white rounded-lg
 
  ${project.unbilledQuantity > 0 ? "bg-red-900" : "bg-green-600"}`}
-                    >{`${
-                      project.unbilledQuantity > 0 ? "Pending" : "Completed"
-                    }`}</button>
-                  </div>
-                </td>
-                <td className="border p-2">{project.rate}</td>
-                <td className="border p-2">
-                  {project.rate * project.quantity}
-                </td>
-                <td className="border p-2 text-center space-x-4">
-                  <div className=" flex flex-row">
-                    <button onClick={() => handleEdit(project)}>
-                      <Icon
-                        name="edit"
-                        tooltip="Edit"
-                        theme="light"
-                        size="medium"
-                        // onClick={doSomething}
-                      />
-                    </button>
-                    <button onClick={() => handleDelete(project._id)}>
-                      <Icon
-                        name="delete"
-                        tooltip="Delete"
-                        theme="light"
-                        size="medium"
-                        // onClick={doSomething}
-                      />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                      >{`${
+                        project.unbilledQuantity > 0 ? "Pending" : "Completed"
+                      }`}</button>
+                    </div>
+                  </td>
+                  <td className="border p-2">{project.rate}</td>
+                  <td className="border p-2">
+                    {project.rate * project.quantity}
+                  </td>
+                  <td className="border p-2 text-center space-x-4">
+                    <div className=" flex flex-row">
+                      <button onClick={() => handleEdit(project)}>
+                        <Icon
+                          name="edit"
+                          tooltip="Edit"
+                          theme="light"
+                          size="medium"
+                          // onClick={doSomething}
+                        />
+                      </button>
+                      <button onClick={() => handleDelete(project._id)}>
+                        <Icon
+                          name="delete"
+                          tooltip="Delete"
+                          theme="light"
+                          size="medium"
+                          // onClick={doSomething}
+                        />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         {showBillModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
@@ -785,6 +787,7 @@ const AddProject = () => {
                     onChange={handleBillChange}
                     className="w-full border border-gray-300 p-2 rounded"
                     required
+                    readOnly
                   />
                 </div>
 
