@@ -14,7 +14,9 @@ const BillSection = () => {
   const [selectedBill, setSelectedBill] = useState(null);
   const [billStatus, setBillStatus] = useState(false);
   const [showBillStatus, setshowBillStatus] = useState(false);
+  const [clearBillModal, setClearBillModal] = useState(false);
   const [unbilledQuantity, setUnbilledQuantity] = useState(0);
+  const [selectedTax, setSelectedTax] = useState(null);
   const [formBillData, setFormBillData] = useState({
     date: "",
     billNumber: "",
@@ -28,6 +30,16 @@ const BillSection = () => {
     sgst: "",
     igst: "",
     tds: "",
+  });
+
+  const [clearBillForm, setClearBillFrom] = useState({
+    date: "",
+    SelectTax: "",
+    PandingAmount: "",
+    PaidAmount: "",
+    PaymentMode: "",
+    ReferenceNumber: "",
+    UploadFile: "",
   });
 
   const generateUniqueBillNo = () =>
@@ -45,13 +57,13 @@ const BillSection = () => {
       try {
         const billsRes = await axios.get("http://localhost:3000/api/bills");
         setBills(billsRes.data || []);
-        console.log(billsRes.data);
+        // console.log(billsRes.data);
       } catch (err) {
         console.error("Error fetching bills:", err);
       }
     };
     fetchData();
-  }, [bills]);
+  }, []);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -213,6 +225,75 @@ const BillSection = () => {
 
   //working with clear bill that sgst cgst and bbt
 
+  //handle clear bill
+  const handleClearBillChange = (e) => {
+    const { name, value } = e.target;
+
+    // Map selected tax to the respective tax amount
+    let taxAmount = 0;
+    if (value === "CGST") {
+      taxAmount = selectedTax.cgst || 0; // Ensure selectedTax has the necessary keys
+    } else if (value === "SGST") {
+      taxAmount = selectedTax.sgst || 0;
+    } else if (value === "IGST") {
+      taxAmount = selectedTax.igst || 0;
+    } else if (value === "TDS") {
+      taxAmount = selectedTax.tds || 0;
+    }
+
+    setClearBillFrom((prevData) => ({
+      ...prevData,
+      [name]: value,
+      PandingAmount: taxAmount,
+    }));
+
+    console.log("Selected Tax:", value);
+    console.log("Pending Amount:", taxAmount);
+  };
+
+  const handleClearBill = (id) => {
+    console.log("Selected Bill ID:", id);
+
+    // Assuming `id` contains the tax-related data (cgst, sgst, etc.)
+    setSelectedTax(id);
+
+    // Initialize the form with blank/default values
+    setClearBillFrom({
+      date: "",
+      SelectTax: "",
+      PandingAmount: "",
+      PaidAmount: "",
+      PaymentMode: "",
+      ReferenceNumber: "",
+      UploadFile: "",
+    });
+  };
+
+  const handleClearBillSubmit = (e) => {
+    e.preventDefault();
+    console.log(clearBillForm);
+  };
+
+  //delete bill modal
+  const deleteClearBill = (bill) => {};
+
+  //edit bill modal
+  const editBillClearBill = (bill) => {};
+
+  // const clearBillFunction = (bill) => {
+  //   console.log(bill);
+  //   setSelectedBill(bill);
+  //   clearBillForm({
+  //     date: "",
+  //     SelectTax: "",
+  //     PandingAmount: "",
+  //     PaidAmount: "",
+  //     PaymentMode: "",
+  //     ReferenceNumber: "",
+  //     UploadFile: "",
+  //   });
+  // };
+
   return (
     <div className="flex">
       <Sidebar />
@@ -271,7 +352,13 @@ const BillSection = () => {
                       </button>
                     </td>
                     <td className="border px-4 py-2">
-                      <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                      <button
+                        onClick={() => {
+                          setClearBillModal(true); // Opens the modal
+                          handleClearBill(bill); // Calls your function with the provided id
+                        }}
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                      >
                         Clear Bill
                       </button>
                     </td>
@@ -548,6 +635,159 @@ const BillSection = () => {
                     className="bg-blue-500 text-white px-4 py-2 rounded"
                   >
                     {editBillMode ? "Update Bill" : "Add Bill"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* clear bill modal */}
+        {clearBillModal && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+            onClick={() => setClearBillModal(false)} // Close modal when clicking outside
+          >
+            <div
+              className="bg-white p-6 rounded shadow-lg"
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
+            >
+              <form onSubmit={handleClearBillSubmit}>
+                <div className="mb-4 mt-4">
+                  <label htmlFor="date" className="block text-sm font-medium">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    id="date"
+                    name="date"
+                    value={clearBillForm.date}
+                    onChange={handleClearBillChange}
+                    className="w-full border border-gray-300 p-2 rounded"
+                    required
+                  />
+                </div>
+                <div className="mb-4 mt-4">
+                  <label
+                    htmlFor="selectTax"
+                    className="block text-sm font-medium"
+                  >
+                    Select Tax
+                  </label>
+                  <select
+                    id="selectTax"
+                    name="SelectTax"
+                    value={clearBillForm.SelectTax} // Bind the selected tax value to the state
+                    onChange={handleClearBillChange} // Handle change for updates
+                    className="w-full border border-gray-300 p-2 rounded"
+                    required
+                  >
+                    <option value="">Select a tax</option>
+                    <option value="CGST">CGST</option>
+                    <option value="SGST">SGST</option>
+                    <option value="IGST">IGST</option>
+                    <option value="TDS">TDS</option>
+                  </select>
+                </div>
+
+                <div className="mb-4 mt-4">
+                  <label
+                    htmlFor="PandingAmount"
+                    className="block text-sm font-medium"
+                  >
+                    Panding Amount
+                  </label>
+                  <input
+                    type="number"
+                    id="PandingAmount"
+                    name="PandingAmount"
+                    value={clearBillForm.PandingAmount}
+                    onChange={handleClearBillChange} // Handle change for PandingAmount
+                    className="w-full border border-gray-300 p-2 rounded"
+                    required
+                  />
+                </div>
+                <div className="mb-4 mt-4">
+                  <label
+                    htmlFor="PaidAmount"
+                    className="block text-sm font-medium"
+                  >
+                    Paid Amount
+                  </label>
+                  <input
+                    type="Number"
+                    id="PaidAmount"
+                    name="PaidAmount"
+                    value={clearBillForm.PaidAmount}
+                    onChange={handleClearBillChange}
+                    className="w-full border border-gray-300 p-2 rounded"
+                    required
+                  />
+                </div>
+                <div className="mb-4 mt-4">
+                  <label
+                    htmlFor="PaymentMode"
+                    className="block text-sm font-medium"
+                  >
+                    Payment Mode
+                  </label>
+                  <input
+                    type="text"
+                    id="PaymentMode"
+                    name="PaymentMode"
+                    value={clearBillForm.PaymentMode}
+                    onChange={handleClearBillChange}
+                    className="w-full border border-gray-300 p-2 rounded"
+                    required
+                  />
+                </div>
+                <div className="mb-4 mt-4">
+                  <label
+                    htmlFor="ReferenceNumber"
+                    className="block text-sm font-medium"
+                  >
+                    Reference Number
+                  </label>
+                  <input
+                    type="text"
+                    id="ReferenceNumber"
+                    name="ReferenceNumber"
+                    value={clearBillForm.ReferenceNumber}
+                    onChange={handleClearBillChange}
+                    className="w-full border border-gray-300 p-2 rounded"
+                    required
+                  />
+                </div>
+                <div className="mb-4 mt-4">
+                  <label
+                    htmlFor="UploadFile"
+                    className="block text-sm font-medium"
+                  >
+                    Date
+                  </label>
+                  <input
+                    type="file"
+                    id="UploadFile"
+                    name="UploadFile"
+                    value={clearBillForm.UploadFile}
+                    onChange={handleClearBillChange}
+                    className="w-full border border-gray-300 p-2 rounded"
+                    required
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setClearBillModal(false)}
+                    className="px-4 py-2 bg-gray-300 rounded"
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-blue-500 text-white rounded"
+                  >
+                    Submit
                   </button>
                 </div>
               </form>
