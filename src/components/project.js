@@ -39,6 +39,7 @@ const AddProject = () => {
     sgst: "",
     igst: "",
     tds: "",
+    unbilledQuantity: "",
   });
 
   const [formData, setFormData] = useState({
@@ -147,7 +148,7 @@ const AddProject = () => {
       rate: formData.rate,
       // price: formData.price,
       fileUpload: formData.fileUpload || null,
-      unbilledQuantity: formData.quantity,
+      unbilledQuantity: formData.unbilledQuantity,
     };
 
     console.log("Data to Submit:", dataToSubmit);
@@ -268,6 +269,7 @@ const AddProject = () => {
         cgst: "",
         sgst: "",
         igst: "",
+        unbilledQuantity: "",
       });
     } else {
       // Select the project and spread its data into form fields
@@ -289,6 +291,7 @@ const AddProject = () => {
         cgst: project.CGST || "",
         sgst: project.SGST || "",
         igst: project.IGST || "",
+        unbilledQuantity: project.unbilledQuantity || "",
       });
     }
   };
@@ -458,6 +461,7 @@ const AddProject = () => {
                   >
                     <option value={0}>Select CGST</option>
                     <option value={5}>5%</option>
+                    <option value={9}>9%</option>
                     <option value={12}>12%</option>
                     <option value={18}>18%</option>
                   </select>
@@ -469,6 +473,7 @@ const AddProject = () => {
                   >
                     <option value={0}>Select SGST</option>
                     <option value={5}>5%</option>
+                    <option value={9}>9%</option>
                     <option value={12}>12%</option>
                     <option value={18}>18%</option>
                   </select>
@@ -593,9 +598,9 @@ const AddProject = () => {
                 <th className="p-4 border">File</th>
                 <th className="p-4 border">Quantity</th>
                 <th className="p-4 border">Unbilled Quantity</th>
-                <th className="p-4 border">Status</th>
                 <th className="p-4 border">Rate</th>
                 <th className="p-4 border">Total</th>
+                <th className="p-4 border">Status</th>
                 <th className="p-4 border">Action</th>
               </tr>
             </thead>
@@ -630,6 +635,10 @@ const AddProject = () => {
                   </td>
                   <td className="border p-2">{project.quantity}</td>
                   <td className="border p-2">{project.unbilledQuantity}</td>
+                  <td className="border p-2">{project.rate}</td>
+                  <td className="border p-2">
+                    {project.rate * project.unbilledQuantity}
+                  </td>
                   <td>
                     <div className="h-full flex item-center justify-center">
                       <button
@@ -640,10 +649,6 @@ const AddProject = () => {
                         project.unbilledQuantity > 0 ? "Pending" : "Completed"
                       }`}</button>
                     </div>
-                  </td>
-                  <td className="border p-2">{project.rate}</td>
-                  <td className="border p-2">
-                    {project.rate * project.quantity}
                   </td>
                   <td className="border p-2 text-center space-x-4">
                     <div className=" flex flex-row">
@@ -777,13 +782,13 @@ const AddProject = () => {
                     htmlFor="quantity"
                     className="block text-sm font-medium"
                   >
-                    Quantity
+                    Unbilled Quantity
                   </label>
                   <input
                     type="number"
                     id="quantity"
                     name="quantity"
-                    value={formBillData.quantity}
+                    value={formBillData.unbilledQuantity}
                     onChange={handleBillChange}
                     className="w-full border border-gray-300 p-2 rounded"
                     required

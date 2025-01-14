@@ -13,10 +13,8 @@ const BillSection = () => {
   const [editBillMode, setEditBillMode] = useState(false);
   const [selectedBill, setSelectedBill] = useState(null);
   const [billStatus, setBillStatus] = useState(false);
-  const [showBillStatus, setshowBillStatus] = useState(false);
-  const [clearBillModal, setClearBillModal] = useState(false);
   const [unbilledQuantity, setUnbilledQuantity] = useState(0);
-  const [selectedTax, setSelectedTax] = useState(null);
+  // const [selectedTax, setSelectedTax] = useState(null);
   const [formBillData, setFormBillData] = useState({
     date: "",
     billNumber: "",
@@ -30,16 +28,7 @@ const BillSection = () => {
     sgst: "",
     igst: "",
     tds: "",
-  });
-
-  const [clearBillForm, setClearBillFrom] = useState({
-    date: "",
-    SelectTax: "",
-    PandingAmount: "",
-    PaidAmount: "",
-    PaymentMode: "",
-    ReferenceNumber: "",
-    UploadFile: "",
+    unbilledQuantity: "",
   });
 
   const generateUniqueBillNo = () =>
@@ -82,6 +71,7 @@ const BillSection = () => {
   const handleBillChange = (e) => {
     const { name, value } = e.target;
     setFormBillData((prevData) => ({ ...prevData, [name]: value }));
+    console.log(`Field Changed: ${name}, New Value: ${value}`);
   };
 
   const handleProjectSelect = (e) => {
@@ -103,6 +93,7 @@ const BillSection = () => {
         sgst: project.SGST,
         igst: project.IGST,
         tds: project.TDS,
+        unbilledQuantity: project.unbilledQuantity || "",
       });
     }
   };
@@ -225,30 +216,53 @@ const BillSection = () => {
 
   //working with clear bill that sgst cgst and bbt
 
+  const [showBillStatus, setshowBillStatus] = useState(false);
+  const [selectedTax, setSelectedTax] = useState(null);
+  const [clearBillModal, setClearBillModal] = useState(false);
+  const [clearBillForm, setClearBillForm] = useState({
+    date: "",
+    SelectTax: "",
+    PandingAmount: "",
+    PaidAmount: "",
+    PaymentMode: "",
+    ReferenceNumber: "",
+    UploadFile: "",
+    billId: "",
+  });
+
   //handle clear bill
   const handleClearBillChange = (e) => {
     const { name, value } = e.target;
 
-    // Map selected tax to the respective tax amount
-    let taxAmount = 0;
-    if (value === "CGST") {
-      taxAmount = selectedTax.cgst || 0; // Ensure selectedTax has the necessary keys
-    } else if (value === "SGST") {
-      taxAmount = selectedTax.sgst || 0;
-    } else if (value === "IGST") {
-      taxAmount = selectedTax.igst || 0;
-    } else if (value === "TDS") {
-      taxAmount = selectedTax.tds || 0;
-    }
+    setClearBillForm((prevData) => {
+      const updatedData = {
+        ...prevData,
+        [name]: value,
+        BillNumber: selectedTax.billNumber,
+      };
 
-    setClearBillFrom((prevData) => ({
-      ...prevData,
-      [name]: value,
-      PandingAmount: taxAmount,
-    }));
+      // Only update PandingAmount when SelectTax changes
+      if (name === "SelectTax") {
+        let taxAmount = 0;
 
-    console.log("Selected Tax:", value);
-    console.log("Pending Amount:", taxAmount);
+        if (value === "CGST") {
+          taxAmount = selectedTax?.cgst || 0;
+        } else if (value === "SGST") {
+          taxAmount = selectedTax?.sgst || 0;
+        } else if (value === "IGST") {
+          taxAmount = selectedTax?.igst || 0;
+        } else if (value === "TDS") {
+          taxAmount = selectedTax?.tds || 0;
+        } else if (value === "balanceBeforeTax") {
+          taxAmount = selectedTax?.balanceBeforeTax || 0;
+        }
+        updatedData.PandingAmount = taxAmount; // Update PandingAmount only for SelectTax
+      }
+
+      return updatedData;
+    });
+
+    console.log(`Field Changed: ${name}, New Value: ${value}`);
   };
 
   const handleClearBill = (id) => {
@@ -256,9 +270,20 @@ const BillSection = () => {
 
     // Assuming `id` contains the tax-related data (cgst, sgst, etc.)
     setSelectedTax(id);
+  };
 
-    // Initialize the form with blank/default values
-    setClearBillFrom({
+  const handleClearBillSubmit = (e) => {
+    e.preventDefault();
+    console.log(clearBillForm);
+
+    try {
+      axios.post("http://localhost:3000/api/clearbill", clearBillForm);
+      alert("clear bill successfully added");
+    } catch (err) {
+      alert("getting error in sending clear bill form", err);
+    }
+    setClearBillModal(false);
+    setClearBillForm({
       date: "",
       SelectTax: "",
       PandingAmount: "",
@@ -266,12 +291,8 @@ const BillSection = () => {
       PaymentMode: "",
       ReferenceNumber: "",
       UploadFile: "",
+      billId: "",
     });
-  };
-
-  const handleClearBillSubmit = (e) => {
-    e.preventDefault();
-    console.log(clearBillForm);
   };
 
   //delete bill modal
@@ -345,7 +366,14 @@ const BillSection = () => {
                     <td className="border px-4 py-2">{bill.tds}</td>
                     <td className="border px-4 py-2">{bill.totalTax}</td>
                     <td className="border px-4 py-2">{bill.balanceAfterTax}</td>
-                    <td className="border px-4 py-2">Mile Stone</td>
+                    <td className="border px-4 py-2">
+                      <button
+                        type="button"
+                        class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+                      >
+                        Mile Stone
+                      </button>
+                    </td>
                     <td className="border px-4 py-2">
                       <button class="bg-yellow-500 text-white font-bold py-2 px-4 rounded">
                         Bill Status
@@ -568,13 +596,13 @@ const BillSection = () => {
                     htmlFor="quantity"
                     className="block text-sm font-medium"
                   >
-                    Quantity
+                    Unbilled Quantity
                   </label>
                   <input
                     type="number"
                     id="quantity"
                     name="quantity"
-                    value={unbilledQuantity}
+                    value={formBillData.unbilledQuantity}
                     onChange={handleBillChange}
                     className="w-full border border-gray-300 p-2 rounded"
                     required
@@ -687,6 +715,7 @@ const BillSection = () => {
                     <option value="SGST">SGST</option>
                     <option value="IGST">IGST</option>
                     <option value="TDS">TDS</option>
+                    <option value="balanceBeforeTax">BBT</option>
                   </select>
                 </div>
 
@@ -724,7 +753,7 @@ const BillSection = () => {
                     required
                   />
                 </div>
-                <div className="mb-4 mt-4">
+                {/* <div className="mb-4 mt-4">
                   <label
                     htmlFor="PaymentMode"
                     className="block text-sm font-medium"
@@ -740,7 +769,24 @@ const BillSection = () => {
                     className="w-full border border-gray-300 p-2 rounded"
                     required
                   />
+                </div> */}
+
+                <div className="mb-4 mt-4">
+                  <select
+                    id="PaymentMode" // Add an ID for accessibility and state reference
+                    name="PaymentMode" // Ensure the name matches the state field
+                    onChange={handleClearBillChange} // Handle state update on change
+                    value={clearBillForm.PaymentMode} // Bind the selected value to the state
+                    className="w-full border border-gray-300 p-2 rounded" // Add styling for consistency
+                  >
+                    <option value="">Select Payment Options</option>
+                    <option value="UPI">UPI</option>
+                    <option value="Cash">Cash</option>
+                    <option value="NEFT">NEFT</option>
+                    <option value="BANK">Bank</option>
+                  </select>
                 </div>
+
                 <div className="mb-4 mt-4">
                   <label
                     htmlFor="ReferenceNumber"
@@ -763,7 +809,7 @@ const BillSection = () => {
                     htmlFor="UploadFile"
                     className="block text-sm font-medium"
                   >
-                    Date
+                    File Upload
                   </label>
                   <input
                     type="file"
@@ -772,7 +818,6 @@ const BillSection = () => {
                     value={clearBillForm.UploadFile}
                     onChange={handleClearBillChange}
                     className="w-full border border-gray-300 p-2 rounded"
-                    required
                   />
                 </div>
                 <div className="flex justify-end space-x-2">
