@@ -39,7 +39,7 @@ const AddProject = () => {
     sgst: "",
     igst: "",
     tds: "",
-    unbilledQuantity: "",
+    unbilledQuantity: ""
   });
 
   const [formData, setFormData] = useState({
@@ -148,7 +148,7 @@ const AddProject = () => {
       rate: formData.rate,
       // price: formData.price,
       fileUpload: formData.fileUpload || null,
-      unbilledQuantity: formData.unbilledQuantity,
+      unbilledQuantity: formData.quantity,
     };
 
     console.log("Data to Submit:", dataToSubmit);
@@ -269,7 +269,7 @@ const AddProject = () => {
         cgst: "",
         sgst: "",
         igst: "",
-        unbilledQuantity: "",
+        unbilledQuantity: ""
       });
     } else {
       // Select the project and spread its data into form fields
@@ -291,7 +291,6 @@ const AddProject = () => {
         cgst: project.CGST || "",
         sgst: project.SGST || "",
         igst: project.IGST || "",
-        unbilledQuantity: project.unbilledQuantity || "",
       });
     }
   };
@@ -637,7 +636,7 @@ const AddProject = () => {
                   <td className="border p-2">{project.unbilledQuantity}</td>
                   <td className="border p-2">{project.rate}</td>
                   <td className="border p-2">
-                    {project.rate * project.unbilledQuantity}
+                    {project.rate * project.quantity}
                   </td>
                   <td>
                     <div className="h-full flex item-center justify-center">
@@ -788,7 +787,7 @@ const AddProject = () => {
                     type="number"
                     id="quantity"
                     name="quantity"
-                    value={formBillData.unbilledQuantity}
+                    value={formBillData.quantity}
                     onChange={handleBillChange}
                     className="w-full border border-gray-300 p-2 rounded"
                     required

@@ -31,6 +31,26 @@ const BillSection = () => {
     unbilledQuantity: "",
   });
 
+  //clear bill
+
+  const [showBillStatus, setshowBillStatus] = useState(false);
+  const [mapClearBills, setMapClearBills] = useState([]);
+  const [viewClearBill, setViewClearBill] = useState(false);
+  const [getClearBill, setGetClearBill] = useState(false);
+  const [selectedTax, setSelectedTax] = useState(null);
+  const [clearBillModal, setClearBillModal] = useState(false);
+  const [selectedBillId, setSelectedBillId] = useState(null);
+  const [clearBillForm, setClearBillForm] = useState({
+    date: "",
+    SelectTax: "",
+    PandingAmount: "",
+    PaidAmount: "",
+    PaymentMode: "",
+    ReferenceNumber: "",
+    UploadFile: "",
+    billId: "",
+  });
+
   const generateUniqueBillNo = () =>
     `BILLNO-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
 
@@ -216,19 +236,40 @@ const BillSection = () => {
 
   //working with clear bill that sgst cgst and bbt
 
-  const [showBillStatus, setshowBillStatus] = useState(false);
-  const [selectedTax, setSelectedTax] = useState(null);
-  const [clearBillModal, setClearBillModal] = useState(false);
-  const [clearBillForm, setClearBillForm] = useState({
-    date: "",
-    SelectTax: "",
-    PandingAmount: "",
-    PaidAmount: "",
-    PaymentMode: "",
-    ReferenceNumber: "",
-    UploadFile: "",
-    billId: "",
-  });
+  useEffect(() => {
+    const fetchClearBills = async () => {
+      try {
+        const clearbills = await axios.get(
+          "http://localhost:3000/api/clearbill"
+        );
+        setGetClearBill(clearbills.data || []);
+        console.log(clearbills.data);
+      } catch (err) {
+        console.error("Error fetching clear bills:", err);
+      }
+    };
+    fetchClearBills();
+  }, []);
+
+  const handleViewBill = (billNumber) => {
+    // console.log(billNumber); // Logs the billNumber passed to the function
+
+    // Find the specific bill by billNumber
+    const selectedBill = getClearBill.filter(
+      (bill) => bill.BillNumber === billNumber
+    );
+
+    // console.log(selectedBill);
+    setMapClearBills(selectedBill);
+
+    if (selectedBill) {
+      setSelectedBillId(selectedBill.billNumber); // Set the selected bill ID
+      setSelectedBill(selectedBill); // Set the selected bill's details
+      setViewClearBill(true); // Show the modal
+    } else {
+      console.error("Bill not found!");
+    }
+  };
 
   //handle clear bill
   const handleClearBillChange = (e) => {
@@ -266,7 +307,7 @@ const BillSection = () => {
   };
 
   const handleClearBill = (id) => {
-    console.log("Selected Bill ID:", id);
+    // console.log("Selected Bill ID:", id);
 
     // Assuming `id` contains the tax-related data (cgst, sgst, etc.)
     setSelectedTax(id);
@@ -393,9 +434,8 @@ const BillSection = () => {
                     <td className="border px-4 py-2">
                       <button
                         onClick={() => {
-                          // handleViewExpense(expense);
-                          // setShowForm(true);
-                          // setViewRowForm(true);
+                          handleViewBill(bill.billNumber); // Pass the billNumber to handleViewBill
+                          setViewClearBill(true); // Set viewClearBill to true to show the modal
                         }}
                       >
                         <Icon
@@ -406,6 +446,7 @@ const BillSection = () => {
                         />
                       </button>
                     </td>
+
                     <td className="border px-4 py-2">
                       <button
                         className="text-blue-500"
@@ -841,7 +882,73 @@ const BillSection = () => {
         )}
 
         {/* view bill section  */}
-        {}
+        {viewClearBill && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-4">Bill List</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-max bg-white border border-gray-300 table-auto">
+                <thead>
+                  <tr>
+                    <th className="border px-4 py-2">S. No.</th>
+                    <th className="border px-4 py-2">Date</th>
+                    <th className="border px-4 py-2">Select Tax</th>
+                    <th className="border px-4 py-2">Pending Amount</th>
+                    <th className="border px-4 py-2">Paid Amount</th>
+                    <th className="border px-4 py-2">Payment Mode</th>
+                    <th className="border px-4 py-2">Reference Number</th>
+                    <th className="border px-4 py-2">Uploaded File</th>
+                    <th className="border px-4 py-2">Bill Number</th>
+                    <th className="border px-4 py-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* Filter the bill based on selectedBillId (which holds the billNumber) */}
+                  {mapClearBills.map((clearbill, index) => (
+                    <tr key={clearbill.billId}>
+                      <td className="border px-4 py-2">{index + 1}</td>
+                      <td className="border px-4 py-2">{clearbill.date}</td>
+                      <td className="border px-4 py-2">
+                        {clearbill.SelectTax}
+                      </td>
+                      <td className="border px-4 py-2">
+                        {clearbill.PandingAmount}
+                      </td>
+                      <td className="border px-4 py-2">
+                        {clearbill.PaidAmount}
+                      </td>
+                      <td className="border px-4 py-2">
+                        {clearbill.PaymentMode}
+                      </td>
+                      <td className="border px-4 py-2">
+                        {clearbill.ReferenceNumber}
+                      </td>
+                      <td className="border px-4 py-2">
+                        {clearbill.UploadFile}
+                      </td>
+                      <td className="border px-4 py-2">
+                        {clearbill.BillNumber}
+                      </td>
+                      <td className="border px-4 py-2">
+                        <button
+                          className="text-blue-500 ml-2"
+                          onClick={() => {}}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className="text-red-500 ml-2"
+                          onClick={() => {}}
+                        >
+                          🗑️
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
