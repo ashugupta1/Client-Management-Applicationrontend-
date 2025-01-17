@@ -39,12 +39,12 @@ const AddProject = () => {
     sgst: "",
     igst: "",
     tds: "",
-    unbilledQuantity: ""
+    unbilledQuantity: "",
   });
 
   const [formData, setFormData] = useState({
     projectName: "",
-    orderNumber: "",
+    // orderNumber: "",
     projectAddress: "",
     TDS: 0,
     CGST: 0,
@@ -57,7 +57,7 @@ const AddProject = () => {
     quantity: 0,
     rate: 0,
     // price: 0,
-    total: 0,
+    // total: 0,
     unbilledQuantity: 0,
   });
   const navigate = useNavigate();
@@ -146,7 +146,7 @@ const AddProject = () => {
       description: formData.description,
       quantity: formData.quantity,
       rate: formData.rate,
-      // price: formData.price,
+      // orderNumber: formData.orderNumber,
       fileUpload: formData.fileUpload || null,
       unbilledQuantity: formData.quantity,
     };
@@ -197,7 +197,7 @@ const AddProject = () => {
     setShowForm(false);
     setFormData({
       projectName: "",
-      orderNumber: "",
+      // orderNumber: "",
       projectAddress: "",
       TDS: 0,
       CGST: 0,
@@ -210,7 +210,7 @@ const AddProject = () => {
       quantity: 0,
       rate: 0,
       // price: 0,
-      total: 0,
+      // total: 0,
       unbilledQuantity: 0,
     });
   };
@@ -269,7 +269,7 @@ const AddProject = () => {
         cgst: "",
         sgst: "",
         igst: "",
-        unbilledQuantity: ""
+        unbilledQuantity: "",
       });
     } else {
       // Select the project and spread its data into form fields

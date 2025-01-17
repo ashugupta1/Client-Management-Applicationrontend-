@@ -14,10 +14,13 @@ const BillSection = () => {
   const [selectedBill, setSelectedBill] = useState(null);
   const [billStatus, setBillStatus] = useState(false);
   const [unbilledQuantity, setUnbilledQuantity] = useState(0);
+  const [mileStone, setMileStones] = useState([]);
+  const [viewmileStone, setViewMileStones] = useState(false);
   // const [selectedTax, setSelectedTax] = useState(null);
   const [formBillData, setFormBillData] = useState({
     date: "",
     billNumber: "",
+    orderNumber: "",
     billedTo: "",
     projectName: "",
     description: "",
@@ -40,6 +43,7 @@ const BillSection = () => {
   const [selectedTax, setSelectedTax] = useState(null);
   const [clearBillModal, setClearBillModal] = useState(false);
   const [selectedBillId, setSelectedBillId] = useState(null);
+  const [renderMileStone, setRenderMileStone] = useState([]);
   const [clearBillForm, setClearBillForm] = useState({
     date: "",
     SelectTax: "",
@@ -65,12 +69,24 @@ const BillSection = () => {
     const fetchData = async () => {
       try {
         const billsRes = await axios.get("http://localhost:3000/api/bills");
-        setBills(billsRes.data || []);
-        // console.log(billsRes.data);
+
+        // Ensure data exists and is structured properly
+        const billsData = billsRes.data.bills || [];
+        const mileStonesData = billsRes.data.mileStones || [];
+
+        // Update states with the fetched data
+        setBills(billsData);
+        setMileStones(mileStonesData);
+
+        // Log the first milestone entry (if available)
+        if (mileStonesData.length > 0) {
+          console.log("First milestone:", mileStonesData[0]);
+        }
       } catch (err) {
         console.error("Error fetching bills:", err);
       }
     };
+
     fetchData();
   }, []);
 
@@ -114,12 +130,15 @@ const BillSection = () => {
         igst: project.IGST,
         tds: project.TDS,
         unbilledQuantity: project.unbilledQuantity || "",
+        orderNumber: project.orderNumber,
       });
     }
   };
 
   const handleBillSubmit = async (e) => {
     e.preventDefault();
+    console.log(formBillData);
+
     try {
       if (editBillMode) {
         console.log(formBillData);
@@ -185,6 +204,7 @@ const BillSection = () => {
       }
       setShowBillModal(false);
       setFormBillData({
+        projectName: "",
         date: "",
         billNumber: "",
         billedTo: "",
@@ -196,12 +216,38 @@ const BillSection = () => {
         sgst: "",
         igst: "",
         tds: "",
+        orderNumber: "",
       });
     } catch (error) {
       console.error("Error submitting bill:", error);
       alert("Failed to create or update the bill.");
     }
   };
+
+  const handleViewMilestones = (orderNumber) => {
+    console.log("Looking for milestones with order number:", orderNumber);
+    console.log(mileStone);
+
+    // Check if mileStone is defined and is an array
+    if (Array.isArray(mileStone)) {
+      const mileStoneData = mileStone.filter(
+        (milestone) => milestone.orderNumber === orderNumber
+      );
+
+      setRenderMileStone(mileStoneData);
+
+      if (mileStoneData.length > 0) {
+        console.log("Found milestones:", mileStoneData);
+        // Do something with mileStoneData, e.g., update state or trigger UI
+      } else {
+        console.log("No milestones found for this order number.");
+      }
+    } else {
+      console.error("mileStone data is not an array or is undefined.");
+    }
+  };
+
+  const closeModal = () => setViewMileStones(false);
 
   const handleBillDelete = async (id) => {
     try {
@@ -229,6 +275,7 @@ const BillSection = () => {
       sgst: bill.sgst,
       igst: bill.igst,
       tds: bill.tds,
+      // orderNumber: bill.orderNumber
     });
     setEditBillMode(true);
     setShowBillModal(true);
@@ -243,7 +290,7 @@ const BillSection = () => {
           "http://localhost:3000/api/clearbill"
         );
         setGetClearBill(clearbills.data || []);
-        console.log(clearbills.data);
+        // console.log(clearbills.data);
       } catch (err) {
         console.error("Error fetching clear bills:", err);
       }
@@ -380,7 +427,7 @@ const BillSection = () => {
                   <th className="border px-4 py-2">S. No.</th>
                   <th className="border px-4 py-2">Date</th>
                   <th className="border px-4 py-2">Project Name</th>
-                  <th className="border px-4 py-2">Bill Number</th>
+                  <th className="border px-4 py-2">Order number</th>
                   <th className="border px-4 py-2">Billed Quantity</th>
                   <th className="border px-4 py-2">Balance Before Tax</th>
                   <th className="border px-4 py-2">TDS</th>
@@ -399,7 +446,7 @@ const BillSection = () => {
                     <td className="border px-4 py-2">{index + 1}</td>
                     <td className="border px-4 py-2">{bill.date}</td>
                     <td className="border px-4 py-2">{bill.projectName}</td>
-                    <td className="border px-4 py-2">{bill.billNumber}</td>
+                    <td className="border px-4 py-2">{bill.orderNumber}</td>
                     <td className="border px-4 py-2">{bill.billedQuantity}</td>
                     <td className="border px-4 py-2">
                       {bill.balanceBeforeTax}
@@ -409,6 +456,10 @@ const BillSection = () => {
                     <td className="border px-4 py-2">{bill.balanceAfterTax}</td>
                     <td className="border px-4 py-2">
                       <button
+                        onClick={() => {
+                          setViewMileStones(true);
+                          handleViewMilestones(bill.orderNumber);
+                        }}
                         type="button"
                         class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
                       >
@@ -479,7 +530,9 @@ const BillSection = () => {
         </div>
         {showBillModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-            <div className="bg-white p-6 rounded shadow-lg w-1/3">
+            <div className="bg-white p-6 rounded shadow-lg w-1/3 max-h-[80vh] overflow-y-auto">
+              {" "}
+              {/* Added scroll */}
               <h2 className="text-xl font-bold mb-4">
                 {editBillMode ? "Edit Bill" : "Add Bill"}
               </h2>
@@ -508,72 +561,43 @@ const BillSection = () => {
                   >
                     Project
                   </label>
-                  {editBillMode === "Edit Bill"
-                    ? (console.log("if true ", editBillMode),
-                      (
-                        // Render a text field when in edit mode
-                        <div className="mb-4">
-                          <label
-                            htmlFor="billNumber"
-                            className="block text-sm font-medium"
-                          >
-                            Bill Number
-                          </label>
-                          <input
-                            type="text"
-                            id="projectName"
-                            name="projectName"
-                            value={formBillData.projectName}
-                            readOnly
-                            className="w-full border border-gray-300 p-2 rounded"
-                            required
-                          />
-                        </div>
-                      ))
-                    : // Render a dropdown when in create mode
-                      (console.log("if false ", editBillMode),
-                      (
-                        <select
-                          id="projectName"
-                          name="projectName"
-                          value={selectedProject}
-                          onChange={handleProjectSelect}
-                          className="w-full border border-gray-300 p-2 rounded"
-                          required
-                        >
-                          <option value="">Select a project</option>
-                          {projects.map((project) => (
-                            <option key={project._id} value={project._id}>
-                              {project.projectName}
-                            </option>
-                          ))}
-                        </select>
+                  {editBillMode === "Edit Bill" ? (
+                    // Render a text field when in edit mode
+                    <div className="mb-4">
+                      <label
+                        htmlFor="billNumber"
+                        className="block text-sm font-medium"
+                      >
+                        Bill Number
+                      </label>
+                      <input
+                        type="text"
+                        id="projectName"
+                        name="projectName"
+                        value={formBillData.projectName}
+                        readOnly
+                        className="w-full border border-gray-300 p-2 rounded"
+                        required
+                      />
+                    </div>
+                  ) : (
+                    <select
+                      id="projectName"
+                      name="projectName"
+                      value={selectedProject}
+                      onChange={handleProjectSelect}
+                      className="w-full border border-gray-300 p-2 rounded"
+                      required
+                    >
+                      <option value="">Select a project</option>
+                      {projects.map((project) => (
+                        <option key={project._id} value={project._id}>
+                          {project.projectName}
+                        </option>
                       ))}
+                    </select>
+                  )}
                 </div>
-
-                {/* <div className="mb-4">
-                  <label
-                    htmlFor="projectName"
-                    className="block text-sm font-medium"
-                  >
-                    Project
-                  </label>
-                  <select
-                    id="projectName"
-                    name="projectName"
-                    value={selectedProject}
-                    onChange={handleProjectSelect}
-                    className="w-full border border-gray-300 p-2 rounded"
-                    required
-                  >
-                    <option value="">Select a project</option>
-                    {projects.map((project) => (
-                      <option key={project._id} value={project._id}>
-                        {project.projectName}
-                      </option>
-                    ))}
-                  </select>
-                </div> */}
 
                 {/* Bill Number */}
                 <div className="mb-4">
@@ -946,6 +970,53 @@ const BillSection = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {viewmileStone && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+              <div className="flex justify-between items-center border-b pb-3">
+                <h3 className="text-lg font-semibold">mileStone Details</h3>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  ×
+                </button>
+              </div>
+
+              {renderMileStone && renderMileStone.length > 0 ? (
+                <table className="w-full bg-white border border-gray-300 rounded-lg shadow-md mt-4">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="border px-4 py-2 text-left">mileStone</th>
+                      <th className="border px-4 py-2 text-left">Date</th>
+                      <th className="border px-4 py-2 text-left">
+                        Bill Number
+                      </th>
+                      <th className="border px-4 py-2 text-left">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {renderMileStone.map((bill, index) => (
+                      <tr key={index}>
+                        <td className="border px-4 py-2"> {}</td>
+                        <td className="border px-4 py-2">{bill.date}</td>
+                        <td className="border px-4 py-2">{bill.billNumber}</td>
+                        <td className="border px-4 py-2">
+                          {bill.rate * bill.billedQuantity}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="text-center mt-4">
+                  <p className="text-gray-500">No Row Data Found</p>
+                </div>
+              )}
             </div>
           </div>
         )}
