@@ -299,20 +299,16 @@ const BillSection = () => {
   }, []);
 
   const handleViewBill = (billNumber) => {
-    // console.log(billNumber); // Logs the billNumber passed to the function
-
-    // Find the specific bill by billNumber
     const selectedBill = getClearBill.filter(
       (bill) => bill.BillNumber === billNumber
     );
 
-    // console.log(selectedBill);
     setMapClearBills(selectedBill);
 
     if (selectedBill) {
-      setSelectedBillId(selectedBill.billNumber); // Set the selected bill ID
-      setSelectedBill(selectedBill); // Set the selected bill's details
-      setViewClearBill(true); // Show the modal
+      setSelectedBillId(selectedBill.billNumber);
+      setSelectedBill(selectedBill);
+      setViewClearBill(true);
     } else {
       console.error("Bill not found!");
     }
@@ -344,7 +340,7 @@ const BillSection = () => {
         } else if (value === "balanceBeforeTax") {
           taxAmount = selectedTax?.balanceBeforeTax || 0;
         }
-        updatedData.PandingAmount = taxAmount; // Update PandingAmount only for SelectTax
+        updatedData.PandingAmount = taxAmount;
       }
 
       return updatedData;
@@ -354,9 +350,6 @@ const BillSection = () => {
   };
 
   const handleClearBill = (id) => {
-    // console.log("Selected Bill ID:", id);
-
-    // Assuming `id` contains the tax-related data (cgst, sgst, etc.)
     setSelectedTax(id);
   };
 
