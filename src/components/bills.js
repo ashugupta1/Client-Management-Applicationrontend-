@@ -46,13 +46,13 @@ const BillSection = () => {
   const [renderMileStone, setRenderMileStone] = useState([]);
   const [clearBillForm, setClearBillForm] = useState({
     date: "",
+    orderNumber: "",
     SelectTax: "",
     PandingAmount: "",
     PaidAmount: "",
     PaymentMode: "",
     ReferenceNumber: "",
     UploadFile: "",
-    billId: "",
   });
 
   const generateUniqueBillNo = () =>
@@ -318,6 +318,10 @@ const BillSection = () => {
     }
   };
 
+  const selectedMileStone = (orderNumber) => {
+    const mileStone = mileStone.filter
+  };
+
   //handle clear bill
   const handleClearBillChange = (e) => {
     const { name, value } = e.target;
@@ -326,7 +330,7 @@ const BillSection = () => {
       const updatedData = {
         ...prevData,
         [name]: value,
-        BillNumber: selectedTax.billNumber,
+        orderNumber: selectedTax.orderNumber,
       };
 
       // Only update PandingAmount when SelectTax changes
@@ -354,7 +358,7 @@ const BillSection = () => {
   };
 
   const handleClearBill = (id) => {
-    // console.log("Selected Bill ID:", id);
+    console.log("Selected Bill ID:", id);
 
     // Assuming `id` contains the tax-related data (cgst, sgst, etc.)
     setSelectedTax(id);
@@ -373,13 +377,13 @@ const BillSection = () => {
     setClearBillModal(false);
     setClearBillForm({
       date: "",
+      orderNumber: "",
       SelectTax: "",
       PandingAmount: "",
       PaidAmount: "",
       PaymentMode: "",
       ReferenceNumber: "",
       UploadFile: "",
-      billId: "",
     });
   };
 
@@ -389,19 +393,7 @@ const BillSection = () => {
   //edit bill modal
   const editBillClearBill = (bill) => {};
 
-  // const clearBillFunction = (bill) => {
-  //   console.log(bill);
-  //   setSelectedBill(bill);
-  //   clearBillForm({
-  //     date: "",
-  //     SelectTax: "",
-  //     PandingAmount: "",
-  //     PaidAmount: "",
-  //     PaymentMode: "",
-  //     ReferenceNumber: "",
-  //     UploadFile: "",
-  //   });
-  // };
+  
 
   return (
     <div className="flex">
@@ -475,7 +467,8 @@ const BillSection = () => {
                       <button
                         onClick={() => {
                           setClearBillModal(true); // Opens the modal
-                          handleClearBill(bill); // Calls your function with the provided id
+                          handleClearBill(bill);
+                          selectedMileStone(bill.orderNumber); // Calls your function with the provided id
                         }}
                         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                       >
@@ -528,6 +521,7 @@ const BillSection = () => {
             </table>
           </div>
         </div>
+
         {showBillModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
             <div className="bg-white p-6 rounded shadow-lg w-1/3 max-h-[80vh] overflow-y-auto">
@@ -760,6 +754,8 @@ const BillSection = () => {
                     required
                   />
                 </div>
+                
+
                 <div className="mb-4 mt-4">
                   <label
                     htmlFor="selectTax"
@@ -976,9 +972,10 @@ const BillSection = () => {
 
         {viewmileStone && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+            <div className="bg-white rounded-lg shadow-lg w-11/12 max-w-5xl p-6">
+              {/* Modal Header */}
               <div className="flex justify-between items-center border-b pb-3">
-                <h3 className="text-lg font-semibold">mileStone Details</h3>
+                <h3 className="text-lg font-semibold">Mile Stone Details</h3>
                 <button
                   onClick={closeModal}
                   className="text-gray-600 hover:text-gray-900"
@@ -987,31 +984,54 @@ const BillSection = () => {
                 </button>
               </div>
 
+              {/* Modal Content */}
               {renderMileStone && renderMileStone.length > 0 ? (
-                <table className="w-full bg-white border border-gray-300 rounded-lg shadow-md mt-4">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="border px-4 py-2 text-left">mileStone</th>
-                      <th className="border px-4 py-2 text-left">Date</th>
-                      <th className="border px-4 py-2 text-left">
-                        Bill Number
-                      </th>
-                      <th className="border px-4 py-2 text-left">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {renderMileStone.map((bill, index) => (
-                      <tr key={index}>
-                        <td className="border px-4 py-2"> {}</td>
-                        <td className="border px-4 py-2">{bill.date}</td>
-                        <td className="border px-4 py-2">{bill.billNumber}</td>
-                        <td className="border px-4 py-2">
-                          {bill.rate * bill.billedQuantity}
-                        </td>
+                <div className="overflow-x-auto mt-4">
+                  <table className="w-full bg-white border border-gray-300 rounded-lg shadow-md">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="border px-4 py-2 text-left">
+                          Mile Stone
+                        </th>
+                        <th className="border px-4 py-2 text-left">Date</th>
+                        <th className="border px-4 py-2 text-left">
+                          Bill Number
+                        </th>
+                        <th className="border px-4 py-2 text-left">
+                          Balance Before Tax
+                        </th>
+                        <th className="border px-4 py-2 text-left">CGST</th>
+                        <th className="border px-4 py-2 text-left">SGST</th>
+                        <th className="border px-4 py-2 text-left">IGST</th>
+                        <th className="border px-4 py-2 text-left">TDS</th>
+                        <th className="border px-4 py-2 text-left">Amount</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {renderMileStone.map((bill, index) => (
+                        <tr key={index}>
+                          <td className="border px-4 py-2">{`M${
+                            index + 1
+                          }`}</td>
+                          <td className="border px-4 py-2">{bill.date}</td>
+                          <td className="border px-4 py-2">
+                            {bill.billNumber}
+                          </td>
+                          <td className="border px-4 py-2">
+                            {bill.balanceBeforeTax}
+                          </td>
+                          <td className="border px-4 py-2">{bill.cgst}</td>
+                          <td className="border px-4 py-2">{bill.sgst}</td>
+                          <td className="border px-4 py-2">{bill.igst}</td>
+                          <td className="border px-4 py-2">{bill.tds}</td>
+                          <td className="border px-4 py-2">
+                            {bill.rate * bill.billedQuantity}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : (
                 <div className="text-center mt-4">
                   <p className="text-gray-500">No Row Data Found</p>

@@ -598,6 +598,8 @@ const AddProject = () => {
                 <th className="p-4 border">Quantity</th>
                 <th className="p-4 border">Unbilled Quantity</th>
                 <th className="p-4 border">Rate</th>
+                <th className="p-4 border">balanceBeforeTax</th>
+                <th className="p-4 border">balanceAfterTax</th>
                 <th className="p-4 border">Total</th>
                 <th className="p-4 border">Status</th>
                 <th className="p-4 border">Action</th>
@@ -618,10 +620,10 @@ const AddProject = () => {
                   <td className="border p-2">{project.orderNumber}</td>
                   <td className="border p-2">{project.projectName}</td>
                   <td className="border p-2">{project.projectAddress}</td>
-                  <td className="border p-2">{project.IGST}</td>
-                  <td className="border p-2">{project.CGST}</td>
-                  <td className="border p-2">{project.SGST}</td>
-                  <td className="border p-2">{project.TDS}</td>
+                  <td className="border p-2">{(project.quantity * project.rate * project.IGST)/100}</td>
+                  <td className="border p-2">{(project.quantity * project.rate * project.CGST)/100}</td>
+                  <td className="border p-2">{(project.quantity * project.rate * project.SGST)/100}</td>
+                  <td className="border p-2">{(project.quantity * project.rate * project.TDS)/100}</td>
                   <td className="border p-2">{project.billedBy}</td>
                   <td className="border p-2">
                     {project.billedTo
@@ -635,6 +637,8 @@ const AddProject = () => {
                   <td className="border p-2">{project.quantity}</td>
                   <td className="border p-2">{project.unbilledQuantity}</td>
                   <td className="border p-2">{project.rate}</td>
+                  <td className="border p-2">{project.rate * project.quantity - (project.quantity * project.rate * project.TDS)/100}</td>
+                  <td className="border p-2">{project.rate * project.quantity + (project.quantity * project.rate * project.SGST)/100 + (project.quantity * project.rate * project.SGST)/100}</td>
                   <td className="border p-2">
                     {project.rate * project.quantity}
                   </td>
