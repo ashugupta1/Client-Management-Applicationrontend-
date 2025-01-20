@@ -29,6 +29,7 @@ const AddProject = () => {
   const [formBillData, setFormBillData] = useState({
     date: "",
     billNumber: "",
+    orderNumber: "",
     billedTo: "",
     projectName: "",
     description: "",
@@ -271,6 +272,7 @@ const AddProject = () => {
         sgst: "",
         igst: "",
         unbilledQuantity: "",
+        orderNumber: "",
       });
     } else {
       // Select the project and spread its data into form fields
@@ -314,8 +316,8 @@ const AddProject = () => {
 
   const handleBillSubmit = async (e) => {
     const billedQuantity = Number(formBillData.billedQuantity);
-    console.log("Billed Quantity:", billedQuantity);
-    console.log(" Unbilled Quantity:", formBillData.quantity);
+    // console.log("Billed Quantity:", billedQuantity);
+    // console.log(" Unbilled Quantity:", formBillData.quantity);
 
     // console.log(project._id);
 
