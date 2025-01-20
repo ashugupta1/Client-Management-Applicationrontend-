@@ -44,6 +44,10 @@ const BillSection = () => {
   const [clearBillModal, setClearBillModal] = useState(false);
   const [selectedBillId, setSelectedBillId] = useState(null);
   const [renderMileStone, setRenderMileStone] = useState([]);
+  const [billsByOrder, setBillsByOrder] = useState([]); // Bills for the selected order
+  const [selectedOrderNumber, setSelectedOrderNumber] = useState(null); // Selected order number
+  const [selectBill, setSelectBill] = useState(null); // Selected bill for tax details
+
   const [clearBillForm, setClearBillForm] = useState({
     date: "",
     orderNumber: "",
@@ -80,7 +84,7 @@ const BillSection = () => {
 
         // Log the first milestone entry (if available)
         if (mileStonesData.length > 0) {
-          console.log("First milestone:", mileStonesData[0]);
+          // console.log("First milestone:", mileStonesData[0]);
         }
       } catch (err) {
         console.error("Error fetching bills:", err);
@@ -249,6 +253,8 @@ const BillSection = () => {
 
   const closeModal = () => setViewMileStones(false);
 
+  const closeModalClearBill = () => setViewClearBill(false);
+
   const handleBillDelete = async (id) => {
     try {
       await axios.delete(`http://localhost:3000/api/bills/${id}`);
@@ -290,7 +296,6 @@ const BillSection = () => {
           "http://localhost:3000/api/clearbill"
         );
         setGetClearBill(clearbills.data || []);
-        // console.log(clearbills.data);
       } catch (err) {
         console.error("Error fetching clear bills:", err);
       }
@@ -298,57 +303,98 @@ const BillSection = () => {
     fetchClearBills();
   }, []);
 
-  const handleViewBill = (billNumber) => {
-    // console.log(billNumber); // Logs the billNumber passed to the function
+  const handleFetchBillsForOrder = async (orderNumber) => {
+    try {
+      // Set the selected order number
+      setSelectedOrderNumber(orderNumber);
+      console.log(orderNumber);
 
-    // Find the specific bill by billNumber
+      // Fetch bills for the given order number
+      const response = await axios.get(
+        `http://localhost:3000/api/order/${orderNumber}`
+      );
+
+      console.log(response.data.milestones);
+
+      // Set billsByOrder to the 'bills' array or an empty array if not available
+      setBillsByOrder(
+        Array.isArray(response.data.milestones) ? response.data.milestones : []
+      );
+    } catch (err) {
+      console.error("Error fetching bills for order:", err);
+      setBillsByOrder([]);
+    }
+  };
+
+  const handleBillSelection = (billNumber) => {
+    console.log("bill no", billNumber);
+
+    const bill = billsByOrder.find((bill) => bill.billNumber === billNumber);
+    console.log(bill);
+
+    setSelectBill(bill); // Set the selected bill for tax details
+  };
+
+  const handleViewBill = (billNumber) => {
     const selectedBill = getClearBill.filter(
       (bill) => bill.BillNumber === billNumber
     );
 
-    // console.log(selectedBill);
     setMapClearBills(selectedBill);
 
-    if (selectedBill) {
-      setSelectedBillId(selectedBill.billNumber); // Set the selected bill ID
-      setSelectedBill(selectedBill); // Set the selected bill's details
+    if (selectedBill.length > 0) {
+      setSelectedBillId(selectedBill[0].billNumber); // Set the selected bill ID
+      setSelectedBill(selectedBill[0]); // Set the selected bill's details
       setViewClearBill(true); // Show the modal
     } else {
       console.error("Bill not found!");
     }
   };
 
-  const selectedMileStone = (orderNumber) => {
-    const mileStone = mileStone.filter
-  };
-
-  //handle clear bill
+  // Handle clear bill change
+  // Handle clear bill change
   const handleClearBillChange = (e) => {
     const { name, value } = e.target;
+
+    console.log(name, " ", value);
 
     setClearBillForm((prevData) => {
       const updatedData = {
         ...prevData,
         [name]: value,
-        orderNumber: selectedTax.orderNumber,
+        orderNumber: selectBill?.orderNumber || "",
       };
 
-      // Only update PandingAmount when SelectTax changes
-      if (name === "SelectTax") {
+      // Only update PandingAmount if the selected tax value is relevant
+      if (
+        name === "SelectTax" &&
+        value // Ensure we only update for the SelectTax change
+      ) {
         let taxAmount = 0;
 
-        if (value === "CGST") {
-          taxAmount = selectedTax?.cgst || 0;
-        } else if (value === "SGST") {
-          taxAmount = selectedTax?.sgst || 0;
-        } else if (value === "IGST") {
-          taxAmount = selectedTax?.igst || 0;
-        } else if (value === "TDS") {
-          taxAmount = selectedTax?.tds || 0;
-        } else if (value === "balanceBeforeTax") {
-          taxAmount = selectedTax?.balanceBeforeTax || 0;
+        // Match the value correctly with tax fields in selectBill (case sensitive)
+        switch (value) {
+          case "CGST":
+            console.log("Inside CGST case");
+            taxAmount = selectBill?.cgst || 0;
+            break;
+          case "SGST":
+            taxAmount = selectBill?.sgst || 0;
+            break;
+          case "IGST":
+            taxAmount = selectBill?.igst || 0;
+            break;
+          case "TDS":
+            taxAmount = selectBill?.tds || 0;
+            break;
+          case "balanceBeforeTax":
+            taxAmount = selectBill?.balanceBeforeTax || 0;
+            break;
+          default:
+            taxAmount = 0;
         }
-        updatedData.PandingAmount = taxAmount; // Update PandingAmount only for SelectTax
+
+        updatedData.PandingAmount = taxAmount; // Update PandingAmount based on the selected tax
       }
 
       return updatedData;
@@ -357,43 +403,31 @@ const BillSection = () => {
     console.log(`Field Changed: ${name}, New Value: ${value}`);
   };
 
-  const handleClearBill = (id) => {
-    console.log("Selected Bill ID:", id);
-
-    // Assuming `id` contains the tax-related data (cgst, sgst, etc.)
-    setSelectedTax(id);
-  };
-
-  const handleClearBillSubmit = (e) => {
+  const handleClearBillSubmit = async (e) => {
     e.preventDefault();
     console.log(clearBillForm);
 
     try {
-      axios.post("http://localhost:3000/api/clearbill", clearBillForm);
-      alert("clear bill successfully added");
+      await axios.post("http://localhost:3000/api/clearbill", clearBillForm);
+      alert("Clear bill successfully added");
+      setClearBillModal(false); // Close modal after successful submit
+
+      // Reset form
+      setClearBillForm({
+        date: "",
+        orderNumber: "",
+        SelectTax: "",
+        PandingAmount: "",
+        PaidAmount: "",
+        PaymentMode: "",
+        ReferenceNumber: "",
+        UploadFile: "",
+      });
     } catch (err) {
-      alert("getting error in sending clear bill form", err);
+      console.error("Error in sending clear bill form:", err);
+      alert("Error submitting clear bill");
     }
-    setClearBillModal(false);
-    setClearBillForm({
-      date: "",
-      orderNumber: "",
-      SelectTax: "",
-      PandingAmount: "",
-      PaidAmount: "",
-      PaymentMode: "",
-      ReferenceNumber: "",
-      UploadFile: "",
-    });
   };
-
-  //delete bill modal
-  const deleteClearBill = (bill) => {};
-
-  //edit bill modal
-  const editBillClearBill = (bill) => {};
-
-  
 
   return (
     <div className="flex">
@@ -467,8 +501,7 @@ const BillSection = () => {
                       <button
                         onClick={() => {
                           setClearBillModal(true); // Opens the modal
-                          handleClearBill(bill);
-                          selectedMileStone(bill.orderNumber); // Calls your function with the provided id
+                          handleFetchBillsForOrder(bill.orderNumber);
                         }}
                         className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                       >
@@ -736,10 +769,11 @@ const BillSection = () => {
             onClick={() => setClearBillModal(false)} // Close modal when clicking outside
           >
             <div
-              className="bg-white p-6 rounded shadow-lg"
+              className="bg-white p-6 rounded shadow-lg overflow-y-auto max-h-[80vh] w-full sm:w-[500px]"
               onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
             >
               <form onSubmit={handleClearBillSubmit}>
+                {/* Date Input */}
                 <div className="mb-4 mt-4">
                   <label htmlFor="date" className="block text-sm font-medium">
                     Date
@@ -754,8 +788,35 @@ const BillSection = () => {
                     required
                   />
                 </div>
-                
 
+                {/* Select Bill Dropdown */}
+                <div className="mb-4 mt-4">
+                  <label
+                    htmlFor="selectBill"
+                    className="block text-sm font-medium"
+                  >
+                    Select Bill
+                  </label>
+                  <select
+                    id="selectBill"
+                    name="selectedBillId"
+                    value={clearBillForm.selectedBillId} // Bind the selected bill ID to the state
+                    onChange={(e) => {
+                      handleBillSelection(e.target.value); // Fetch tax details for the selected bill
+                    }}
+                    className="w-full border border-gray-300 p-2 rounded"
+                    required
+                  >
+                    <option value="">Select a bill</option>
+                    {billsByOrder.map((bill) => (
+                      <option key={bill.billNumber} value={bill.billNumber}>
+                        {bill.billNumber}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Tax Options Dropdown */}
                 <div className="mb-4 mt-4">
                   <label
                     htmlFor="selectTax"
@@ -766,8 +827,8 @@ const BillSection = () => {
                   <select
                     id="selectTax"
                     name="SelectTax"
-                    value={clearBillForm.SelectTax} // Bind the selected tax value to the state
-                    onChange={handleClearBillChange} // Handle change for updates
+                    value={clearBillForm.SelectTax}
+                    onChange={handleClearBillChange}
                     className="w-full border border-gray-300 p-2 rounded"
                     required
                   >
@@ -780,23 +841,26 @@ const BillSection = () => {
                   </select>
                 </div>
 
+                {/* Panding Amount */}
                 <div className="mb-4 mt-4">
                   <label
                     htmlFor="PandingAmount"
                     className="block text-sm font-medium"
                   >
-                    Panding Amount
+                    Pending Amount
                   </label>
                   <input
                     type="number"
                     id="PandingAmount"
                     name="PandingAmount"
                     value={clearBillForm.PandingAmount}
-                    onChange={handleClearBillChange} // Handle change for PandingAmount
+                    onChange={handleClearBillChange}
                     className="w-full border border-gray-300 p-2 rounded"
                     required
                   />
                 </div>
+
+                {/* Paid Amount */}
                 <div className="mb-4 mt-4">
                   <label
                     htmlFor="PaidAmount"
@@ -805,7 +869,7 @@ const BillSection = () => {
                     Paid Amount
                   </label>
                   <input
-                    type="Number"
+                    type="number"
                     id="PaidAmount"
                     name="PaidAmount"
                     value={clearBillForm.PaidAmount}
@@ -814,31 +878,22 @@ const BillSection = () => {
                     required
                   />
                 </div>
-                {/* <div className="mb-4 mt-4">
+
+                {/* Payment Mode */}
+                <div className="mb-4 mt-4">
                   <label
                     htmlFor="PaymentMode"
                     className="block text-sm font-medium"
                   >
                     Payment Mode
                   </label>
-                  <input
-                    type="text"
+                  <select
                     id="PaymentMode"
                     name="PaymentMode"
                     value={clearBillForm.PaymentMode}
                     onChange={handleClearBillChange}
                     className="w-full border border-gray-300 p-2 rounded"
                     required
-                  />
-                </div> */}
-
-                <div className="mb-4 mt-4">
-                  <select
-                    id="PaymentMode" // Add an ID for accessibility and state reference
-                    name="PaymentMode" // Ensure the name matches the state field
-                    onChange={handleClearBillChange} // Handle state update on change
-                    value={clearBillForm.PaymentMode} // Bind the selected value to the state
-                    className="w-full border border-gray-300 p-2 rounded" // Add styling for consistency
                   >
                     <option value="">Select Payment Options</option>
                     <option value="UPI">UPI</option>
@@ -848,6 +903,7 @@ const BillSection = () => {
                   </select>
                 </div>
 
+                {/* Reference Number */}
                 <div className="mb-4 mt-4">
                   <label
                     htmlFor="ReferenceNumber"
@@ -865,6 +921,8 @@ const BillSection = () => {
                     required
                   />
                 </div>
+
+                {/* File Upload */}
                 <div className="mb-4 mt-4">
                   <label
                     htmlFor="UploadFile"
@@ -876,11 +934,12 @@ const BillSection = () => {
                     type="file"
                     id="UploadFile"
                     name="UploadFile"
-                    value={clearBillForm.UploadFile}
                     onChange={handleClearBillChange}
                     className="w-full border border-gray-300 p-2 rounded"
                   />
                 </div>
+
+                {/* Action Buttons */}
                 <div className="flex justify-end space-x-2">
                   <button
                     type="button"
@@ -903,69 +962,101 @@ const BillSection = () => {
 
         {/* view bill section  */}
         {viewClearBill && (
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-4">Bill List</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-max bg-white border border-gray-300 table-auto">
-                <thead>
-                  <tr>
-                    <th className="border px-4 py-2">S. No.</th>
-                    <th className="border px-4 py-2">Date</th>
-                    <th className="border px-4 py-2">Select Tax</th>
-                    <th className="border px-4 py-2">Pending Amount</th>
-                    <th className="border px-4 py-2">Paid Amount</th>
-                    <th className="border px-4 py-2">Payment Mode</th>
-                    <th className="border px-4 py-2">Reference Number</th>
-                    <th className="border px-4 py-2">Uploaded File</th>
-                    <th className="border px-4 py-2">Bill Number</th>
-                    <th className="border px-4 py-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {/* Filter the bill based on selectedBillId (which holds the billNumber) */}
-                  {mapClearBills.map((clearbill, index) => (
-                    <tr key={clearbill.billId}>
-                      <td className="border px-4 py-2">{index + 1}</td>
-                      <td className="border px-4 py-2">{clearbill.date}</td>
-                      <td className="border px-4 py-2">
-                        {clearbill.SelectTax}
-                      </td>
-                      <td className="border px-4 py-2">
-                        {clearbill.PandingAmount}
-                      </td>
-                      <td className="border px-4 py-2">
-                        {clearbill.PaidAmount}
-                      </td>
-                      <td className="border px-4 py-2">
-                        {clearbill.PaymentMode}
-                      </td>
-                      <td className="border px-4 py-2">
-                        {clearbill.ReferenceNumber}
-                      </td>
-                      <td className="border px-4 py-2">
-                        {clearbill.UploadFile}
-                      </td>
-                      <td className="border px-4 py-2">
-                        {clearbill.BillNumber}
-                      </td>
-                      <td className="border px-4 py-2">
-                        <button
-                          className="text-blue-500 ml-2"
-                          onClick={() => {}}
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          className="text-red-500 ml-2"
-                          onClick={() => {}}
-                        >
-                          🗑️
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white rounded-lg shadow-lg w-11/12 max-w-5xl p-6">
+              {/* Modal Header */}
+              <div className="flex justify-between items-center border-b pb-3">
+                <h3 className="text-lg font-semibold">Clear Bill Details</h3>
+                <button
+                  onClick={closeModalClearBill}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              {mapClearBills.length > 0 ? (
+                <div className="overflow-x-auto mt-4">
+                  <table className="w-full bg-white border border-gray-300 rounded-lg shadow-md">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="border px-4 py-2 text-left">S. No.</th>
+                        <th className="border px-4 py-2 text-left">Date</th>
+                        <th className="border px-4 py-2 text-left">
+                          Select Tax
+                        </th>
+                        <th className="border px-4 py-2 text-left">
+                          Pending Amount
+                        </th>
+                        <th className="border px-4 py-2 text-left">
+                          Paid Amount
+                        </th>
+                        <th className="border px-4 py-2 text-left">
+                          Payment Mode
+                        </th>
+                        <th className="border px-4 py-2 text-left">
+                          Reference Number
+                        </th>
+                        <th className="border px-4 py-2 text-left">
+                          Uploaded File
+                        </th>
+                        <th className="border px-4 py-2 text-left">
+                          Bill Number
+                        </th>
+                        <th className="border px-4 py-2 text-left">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mapClearBills.map((clearbill, index) => (
+                        <tr key={clearbill.billId}>
+                          <td className="border px-4 py-2">{index + 1}</td>
+                          <td className="border px-4 py-2">{clearbill.date}</td>
+                          <td className="border px-4 py-2">
+                            {clearbill.SelectTax}
+                          </td>
+                          <td className="border px-4 py-2">
+                            {clearbill.PandingAmount}
+                          </td>
+                          <td className="border px-4 py-2">
+                            {clearbill.PaidAmount}
+                          </td>
+                          <td className="border px-4 py-2">
+                            {clearbill.PaymentMode}
+                          </td>
+                          <td className="border px-4 py-2">
+                            {clearbill.ReferenceNumber}
+                          </td>
+                          <td className="border px-4 py-2">
+                            {clearbill.UploadFile}
+                          </td>
+                          <td className="border px-4 py-2">
+                            {clearbill.BillNumber}
+                          </td>
+                          <td className="border px-4 py-2">
+                            <button
+                              className="text-blue-500 ml-2"
+                              onClick={() => {}}
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              className="text-red-500 ml-2"
+                              onClick={() => {}}
+                            >
+                              🗑️
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center mt-4">
+                  <p className="text-gray-500">No Row Data Found</p>
+                </div>
+              )}
             </div>
           </div>
         )}

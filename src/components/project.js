@@ -40,6 +40,7 @@ const AddProject = () => {
     igst: "",
     tds: "",
     unbilledQuantity: "",
+    orderNumber: "",
   });
 
   const [formData, setFormData] = useState({
@@ -291,6 +292,7 @@ const AddProject = () => {
         cgst: project.CGST || "",
         sgst: project.SGST || "",
         igst: project.IGST || "",
+        orderNumber: project.orderNumber || "",
       });
     }
   };
@@ -415,7 +417,7 @@ const AddProject = () => {
 
         {showForm && (
           <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-1/2 max-h-[90vh] overflow-y-auto">
               <h2 className="text-2xl font-semibold mb-4">Add New Project</h2>
               <form
                 onSubmit={handleSubmit}
@@ -518,15 +520,6 @@ const AddProject = () => {
                     className="p-3 border border-gray-300 rounded-lg w-full h-24 focus:ring-2 focus:ring-blue-500"
                     required
                   ></textarea>
-                  {/* <input
-                    type="number"
-                    name="quantity"
-                    placeholder="Quantity"
-                    value={formData.quantity}
-                    onChange={handleInputChange}
-                    className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-                    required
-                  /> */}
                   <input
                     type="number"
                     name="quantity"
@@ -550,14 +543,6 @@ const AddProject = () => {
                     onChange={handleFileChange}
                     className="p-3 border border-gray-300 rounded-lg w-full"
                   />
-                  {/* <input
-                    type="number"
-                    name="price"
-                    placeholder="Total Price"
-                    value={formData.price}
-                    className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-                    disabled
-                  /> */}
                 </div>
 
                 <button
@@ -620,10 +605,18 @@ const AddProject = () => {
                   <td className="border p-2">{project.orderNumber}</td>
                   <td className="border p-2">{project.projectName}</td>
                   <td className="border p-2">{project.projectAddress}</td>
-                  <td className="border p-2">{(project.quantity * project.rate * project.IGST)/100}</td>
-                  <td className="border p-2">{(project.quantity * project.rate * project.CGST)/100}</td>
-                  <td className="border p-2">{(project.quantity * project.rate * project.SGST)/100}</td>
-                  <td className="border p-2">{(project.quantity * project.rate * project.TDS)/100}</td>
+                  <td className="border p-2">
+                    {(project.quantity * project.rate * project.IGST) / 100}
+                  </td>
+                  <td className="border p-2">
+                    {(project.quantity * project.rate * project.CGST) / 100}
+                  </td>
+                  <td className="border p-2">
+                    {(project.quantity * project.rate * project.SGST) / 100}
+                  </td>
+                  <td className="border p-2">
+                    {(project.quantity * project.rate * project.TDS) / 100}
+                  </td>
                   <td className="border p-2">{project.billedBy}</td>
                   <td className="border p-2">
                     {project.billedTo
@@ -637,8 +630,15 @@ const AddProject = () => {
                   <td className="border p-2">{project.quantity}</td>
                   <td className="border p-2">{project.unbilledQuantity}</td>
                   <td className="border p-2">{project.rate}</td>
-                  <td className="border p-2">{project.rate * project.quantity - (project.quantity * project.rate * project.TDS)/100}</td>
-                  <td className="border p-2">{project.rate * project.quantity + (project.quantity * project.rate * project.SGST)/100 + (project.quantity * project.rate * project.SGST)/100}</td>
+                  <td className="border p-2">
+                    {project.rate * project.quantity -
+                      (project.quantity * project.rate * project.TDS) / 100}
+                  </td>
+                  <td className="border p-2">
+                    {project.rate * project.quantity +
+                      (project.quantity * project.rate * project.SGST) / 100 +
+                      (project.quantity * project.rate * project.SGST) / 100}
+                  </td>
                   <td className="border p-2">
                     {project.rate * project.quantity}
                   </td>
