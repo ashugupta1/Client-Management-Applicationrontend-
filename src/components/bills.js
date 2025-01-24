@@ -32,6 +32,7 @@ const BillSection = () => {
     igst: "",
     tds: "",
     unbilledQuantity: "",
+    status: false,
   });
 
   //clear bill
@@ -39,7 +40,7 @@ const BillSection = () => {
   const [showBillStatus, setshowBillStatus] = useState(false);
   const [mapClearBills, setMapClearBills] = useState([]);
   const [viewClearBill, setViewClearBill] = useState(false);
-  const [getClearBill, setGetClearBill] = useState(false);
+  const [getClearBill, setGetClearBill] = useState([]);
   const [selectedTax, setSelectedTax] = useState(null);
   const [clearBillModal, setClearBillModal] = useState(false);
   const [selectedBillId, setSelectedBillId] = useState(null);
@@ -50,6 +51,7 @@ const BillSection = () => {
 
   const [clearBillForm, setClearBillForm] = useState({
     date: "",
+    billNumber: "",
     orderNumber: "",
     SelectTax: "",
     PandingAmount: "",
@@ -81,6 +83,7 @@ const BillSection = () => {
         // Update states with the fetched data
         setBills(billsData);
         setMileStones(mileStonesData);
+        // console.log(billsRes);
 
         // Log the first milestone entry (if available)
         if (mileStonesData.length > 0) {
@@ -290,16 +293,51 @@ const BillSection = () => {
   //working with clear bill that sgst cgst and bbt
 
   useEffect(() => {
+    const updateStatus = () => {
+      const updatedBills = bills.map((bill) => {
+        let allBillsCleared = true; // Assume the bill is cleared initially
+
+        // Filter milestones related to the current bill
+        const filterMileStones = mileStone.filter(
+          (milestone) => milestone.orderNumber === bill.orderNumber
+        );
+
+        // Check if any milestone has non-zero tax fields
+        filterMileStones.forEach((filterMilestone) => {
+          // If any tax field is not 0, we set allBillsCleared to false
+          if (
+            filterMilestone.cgst !== 0 ||
+            filterMilestone.sgst !== 0 ||
+            filterMilestone.igst !== 0 ||
+            filterMilestone.tds !== 0 ||
+            filterMilestone.balanceBeforeTax !== 0
+          ) {
+            allBillsCleared = false;
+          }
+        });
+
+        // Return a new bill object with updated status
+        return { ...bill, status: allBillsCleared ? "Completed" : "Pending" };
+      });
+
+      // Update the bills state (if bills is part of state)
+      setBills(updatedBills); // Make sure bills is a state variable and use the setter
+    };
+
+    updateStatus(); // Call the update status function
+  }, [bills, mileStone]); // Dependency array, re-run when bills or milestones change
+  // Dependency array, re-run when bills or milestones change
+
+  useEffect(() => {
     const fetchClearBills = async () => {
       try {
-        const clearbills = await axios.get(
-          "http://localhost:3000/api/clearbill"
-        );
-        setGetClearBill(clearbills.data || []);
+        const response = await axios.get("http://localhost:3000/api/clearbill");
+        setGetClearBill(response.data); // Update state
       } catch (err) {
-        console.error("Error fetching clear bills:", err);
+        console.error("Error fetching clear bills:", err.message);
       }
     };
+
     fetchClearBills();
   }, []);
 
@@ -335,20 +373,24 @@ const BillSection = () => {
     setSelectBill(bill); // Set the selected bill for tax details
   };
 
-  const handleViewBill = (billNumber) => {
+  const handleViewBill = (orderNumber) => {
+    // console.log(orderNumber);
+    // console.log(getClearBill);
+
     const selectedBill = getClearBill.filter(
-      (bill) => bill.BillNumber === billNumber
+      (bill) => bill.orderNumber === orderNumber
     );
 
     setMapClearBills(selectedBill);
+    // console.log(mapClearBills);
 
-    if (selectedBill.length > 0) {
-      setSelectedBillId(selectedBill[0].billNumber); // Set the selected bill ID
-      setSelectedBill(selectedBill[0]); // Set the selected bill's details
-      setViewClearBill(true); // Show the modal
-    } else {
-      console.error("Bill not found!");
-    }
+    // if (selectedBill.length > 0) {
+    //   setSelectedBillId(selectedBill[0].billNumber); // Set the selected bill ID
+    //   setSelectedBill(selectedBill[0]); // Set the selected bill's details
+    //   setViewClearBill(true); // Show the modal
+    // } else {
+    //   console.error("Bill not found!");
+    // }
   };
 
   // Handle clear bill change
@@ -409,12 +451,14 @@ const BillSection = () => {
 
     try {
       await axios.post("http://localhost:3000/api/clearbill", clearBillForm);
+      // await axios.post(`http://localhost:3000/api/${clearbill}`, clearBillForm);
       alert("Clear bill successfully added");
-      setClearBillModal(false); // Close modal after successful submit
+      setClearBillModal(false);
 
       // Reset form
       setClearBillForm({
         date: "",
+        billNumber: "",
         orderNumber: "",
         SelectTax: "",
         PandingAmount: "",
@@ -493,10 +537,17 @@ const BillSection = () => {
                       </button>
                     </td>
                     <td className="border px-4 py-2">
-                      <button class="bg-yellow-500 text-white font-bold py-2 px-4 rounded">
-                        Bill Status
+                      <button
+                        className={` py-2 px-4 rounded text-white ${
+                          bill.status === "Completed"
+                            ? "bg-green-500"
+                            : "bg-yellow-500"
+                        }`}
+                      >
+                        {bill.status === "Completed" ? "Completed" : "Pending"}
                       </button>
                     </td>
+
                     <td className="border px-4 py-2">
                       <button
                         onClick={() => {
@@ -511,7 +562,7 @@ const BillSection = () => {
                     <td className="border px-4 py-2">
                       <button
                         onClick={() => {
-                          handleViewBill(bill.billNumber); // Pass the billNumber to handleViewBill
+                          handleViewBill(bill.orderNumber); // Pass the billNumber to handleViewBill
                           setViewClearBill(true); // Set viewClearBill to true to show the modal
                         }}
                       >
@@ -798,11 +849,12 @@ const BillSection = () => {
                     Select Bill
                   </label>
                   <select
-                    id="selectBill"
-                    name="selectedBillId"
-                    value={clearBillForm.selectedBillId} // Bind the selected bill ID to the state
+                    id="billNumber"
+                    name="billNumber"
+                    value={clearBillForm.billNumber} // Bind the selected bill ID to the state
                     onChange={(e) => {
-                      handleBillSelection(e.target.value); // Fetch tax details for the selected bill
+                      handleBillSelection(e.target.value); // Call the first function
+                      handleClearBillChange(e); // Call the second function
                     }}
                     className="w-full border border-gray-300 p-2 rounded"
                     required
@@ -1001,10 +1053,6 @@ const BillSection = () => {
                         <th className="border px-4 py-2 text-left">
                           Uploaded File
                         </th>
-                        <th className="border px-4 py-2 text-left">
-                          Bill Number
-                        </th>
-                        <th className="border px-4 py-2 text-left">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1029,23 +1077,6 @@ const BillSection = () => {
                           </td>
                           <td className="border px-4 py-2">
                             {clearbill.UploadFile}
-                          </td>
-                          <td className="border px-4 py-2">
-                            {clearbill.BillNumber}
-                          </td>
-                          <td className="border px-4 py-2">
-                            <button
-                              className="text-blue-500 ml-2"
-                              onClick={() => {}}
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              className="text-red-500 ml-2"
-                              onClick={() => {}}
-                            >
-                              🗑️
-                            </button>
                           </td>
                         </tr>
                       ))}
