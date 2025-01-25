@@ -58,8 +58,22 @@ const SiteExpense = () => {
   }, []);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    const { name, value, type, files } = e.target;
+
+    // Check if the input type is "file"
+    if (type === "file") {
+      const file = files[0];
+      if (file && file.type === "application/pdf") {
+        console.log(file);
+
+        setFormData((prevData) => ({ ...prevData, [name]: file }));
+      } else {
+        alert("Please upload a valid PDF file.");
+      }
+    } else {
+      // Handle other input types
+      setFormData((prevData) => ({ ...prevData, [name]: value }));
+    }
   };
 
   const expenseOptions = [
@@ -73,40 +87,99 @@ const SiteExpense = () => {
     "Other",
   ];
 
+  // const handleFormSubmit = async (event) => {
+  //   event.preventDefault();
+
+  //   const formDataWithRows = {
+  //     ...formData,
+  //     Rows: addRows, // Add the rows data here
+  //   };
+
+  //   console.log(formDataWithRows);
+
+  //   if (editExpense) {
+  //     console.log("in edit mode ", formDataWithRows);
+  //     try {
+  //       axios.put(
+  //         `http://localhost:3000/api/expense/${selectExpense._id}`,
+  //         formDataWithRows
+  //       );
+  //       fetchExpenses();
+  //     } catch (error) {
+  //       console.log("getting error while update data", error);
+  //     }
+  //   } else {
+  //     console.log("in post mode ", formDataWithRows);
+  //     try {
+  //       axios.post("http://localhost:3000/api/expense", formDataWithRows);
+  //       fetchExpenses();
+  //       alert("expense successfully added...");
+  //     } catch (error) {
+  //       console.log("getting error while send data", error);
+  //     }
+  //   }
+  //   // console.log(formData);
+  //   setShowForm(false);
+
+  //   setFormData({
+  //     User: "",
+  //     Date: "",
+  //     ProjectName: "",
+  //     Expenses: "",
+  //     Ammount: 0,
+  //     MOP: "",
+  //     ReferenceId: "",
+  //     File: "",
+  //     Remark: "",
+  //   });
+  // };
   const handleFormSubmit = async (event) => {
     event.preventDefault();
-
-    const formDataWithRows = {
-      ...formData,
-      Rows: addRows, // Add the rows data here
-    };
-
-    console.log(formDataWithRows);
-
+  
+    // Create a FormData object to send the data in the correct format
+    const formDataWithRows = new FormData();
+    
+    // Append regular form fields
+    for (const key in formData) {
+      formDataWithRows.append(key, formData[key]);
+    }
+  
+    // Append rows if any
+    formDataWithRows.append("Rows", JSON.stringify(addRows));
+  
+    // Append file (if exists)
+    if (formData.File) {
+      formDataWithRows.append("File", formData.File);
+    }
+  
+    // Check if you're in edit mode or post mode
     if (editExpense) {
-      console.log("in edit mode ", formDataWithRows);
+      console.log("In edit mode", formDataWithRows);
       try {
-        axios.put(
+        await axios.put(
           `http://localhost:3000/api/expense/${selectExpense._id}`,
-          formDataWithRows
+          formDataWithRows,
+          { headers: { "Content-Type": "multipart/form-data" } }
         );
         fetchExpenses();
       } catch (error) {
-        console.log("getting error while update data", error);
+        console.log("Error while updating data", error);
       }
     } else {
-      console.log("in post mode ", formDataWithRows);
+      console.log("In post mode", formDataWithRows);
       try {
-        axios.post("http://localhost:3000/api/expense", formDataWithRows);
+        await axios.post("http://localhost:3000/api/expense", formDataWithRows, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
         fetchExpenses();
-        alert("expense successfully added...");
+        alert("Expense successfully added...");
       } catch (error) {
-        console.log("getting error while send data", error);
+        console.log("Error while sending data", error);
       }
     }
-    // console.log(formData);
+  
+    // Reset form
     setShowForm(false);
-
     setFormData({
       User: "",
       Date: "",
@@ -119,7 +192,7 @@ const SiteExpense = () => {
       Remark: "",
     });
   };
-
+  
   const handleViewExpense = async (expense) => {
     const rows = Array.isArray(expense.Rows) ? expense.Rows : [expense.Rows];
     setViewExpense(rows);
@@ -197,7 +270,7 @@ const SiteExpense = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="bg-white rounded-lg shadow-lg p-8 w-full max-w-3xl">
               <h3 className="text-2xl font-semibold mb-6">Add Expense</h3>
-              <form onSubmit={handleFormSubmit} className="space-y-6">
+              <form onSubmit={handleFormSubmit} className="space-y-6" enctype="multipart/form-data">
                 {/* Form Section for the fields in two rows */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {/* User Name */}
@@ -359,6 +432,7 @@ const SiteExpense = () => {
                       id="file"
                       name="File"
                       type="file"
+                      onChange={handleInputChange}
                       className="w-full px-4 py-3 mt-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                   </div>

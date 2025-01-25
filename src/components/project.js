@@ -153,11 +153,10 @@ const AddProject = () => {
       unbilledQuantity: formData.quantity,
     };
 
-    console.log("Data to Submit:", dataToSubmit);
+    // console.log("Data to Submit:", dataToSubmit);
 
     try {
       if (isEditing) {
-        console.log("Updating project...");
         const res = await axios.put(
           `http://localhost:3000/api/projects/${currentProjectId}`,
           dataToSubmit,
@@ -228,6 +227,8 @@ const AddProject = () => {
   };
 
   const handleEdit = (project) => {
+    console.log(project);
+
     setIsEditing(true);
     setCurrentProjectId(project._id);
     console.log(project._id);
@@ -480,6 +481,7 @@ const AddProject = () => {
                     <option value={12}>12%</option>
                     <option value={18}>18%</option>
                   </select>
+
                   <select
                     name="IGST"
                     value={formData.IGST}
@@ -491,20 +493,37 @@ const AddProject = () => {
                     <option value={12}>12%</option>
                     <option value={18}>18%</option>
                   </select>
-                  <select
-                    name="billedTo"
-                    value={formData.billedTo}
-                    onChange={handleInputChange}
-                    className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Select Client</option>
-                    {clients.map((client) => (
-                      <option key={client._id} value={client._id}>
-                        {client.clientName} - {client.GSTIN}
-                      </option>
-                    ))}
-                  </select>
+
+                  {/* select client  */}
+
+                  {isEditing ? (
+                    <input
+                      type="billedTo"
+                      name="billedTo"
+                      placeholder="billedTo"
+                      value={formData.billedTo.clientName}
+                      onChange={handleInputChange}
+                      className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+                      required
+                      readOnly
+                    />
+                  ) : (
+                    <select
+                      name="billedTo"
+                      value={formData.billedTo}
+                      onChange={handleInputChange}
+                      className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Select Client</option>
+                      {clients.map((client) => (
+                        <option key={client._id} value={client._id}>
+                          {client.clientName} - {client.GSTIN}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
                   <input
                     type="text"
                     name="billedBy"
@@ -522,6 +541,7 @@ const AddProject = () => {
                     className="p-3 border border-gray-300 rounded-lg w-full h-24 focus:ring-2 focus:ring-blue-500"
                     required
                   ></textarea>
+
                   <input
                     type="number"
                     name="quantity"
@@ -531,6 +551,7 @@ const AddProject = () => {
                     className="p-3 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500"
                     required
                   />
+
                   <input
                     type="number"
                     name="rate"

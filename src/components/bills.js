@@ -632,33 +632,26 @@ const BillSection = () => {
                 </div>
 
                 {/* Project Selection */}
-                <div className="mb-4">
-                  <label
-                    htmlFor="projectName"
-                    className="block text-sm font-medium"
-                  >
-                    Project
-                  </label>
-                  {editBillMode === "Edit Bill" ? (
-                    // Render a text field when in edit mode
-                    <div className="mb-4">
-                      <label
-                        htmlFor="billNumber"
-                        className="block text-sm font-medium"
-                      >
-                        Bill Number
-                      </label>
-                      <input
-                        type="text"
-                        id="projectName"
-                        name="projectName"
-                        value={formBillData.projectName}
-                        readOnly
-                        className="w-full border border-gray-300 p-2 rounded"
-                        required
-                      />
-                    </div>
-                  ) : (
+                {editBillMode ? (
+                  <div className="mb-4 mt-4">
+                    <label
+                      htmlFor="projectName"
+                      className="block text-sm font-medium"
+                    >
+                      Project Name
+                    </label>
+                    <input
+                      type="projectName"
+                      id="projectName"
+                      name="projectName"
+                      value={formBillData.projectName}
+                      onChange={handleBillChange}
+                      className="w-full border border-gray-300 p-2 rounded"
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div className="mb-4">
                     <select
                       id="projectName"
                       name="projectName"
@@ -674,8 +667,8 @@ const BillSection = () => {
                         </option>
                       ))}
                     </select>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Bill Number */}
                 <div className="mb-4">
